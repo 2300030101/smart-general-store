@@ -33,10 +33,10 @@ A complete Point of Sale (POS) system designed for Indian general stores with mo
 ### **Local Development**
 ```bash
 # Clone the repository
-git clone [your-repo-url]
+git clone https://github.com/2300030101/smart-general-store.git
 
 # Navigate to project directory
-cd grocery-store
+cd smart-general-store
 
 # Start local server
 npx http-server -p 8000 --cors
