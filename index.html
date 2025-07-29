@@ -21,15 +21,17 @@
       min-height: 100vh;
       color: #1e293b;
       line-height: 1.6;
+      margin: 0;
+      padding: 0;
     }
     
     /* Header Styles */
     header {
       background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
       color: white;
-      padding: 1rem 2rem;
-      border-radius: 16px;
-      margin-bottom: 2rem;
+      padding: 0.5rem 2rem;
+      border-radius: 0;
+      margin-bottom: 0;
       box-shadow: 0 4px 20px rgba(0,0,0,0.1);
       display: flex;
       justify-content: space-between;
@@ -131,8 +133,8 @@
     /* Main Container */
     main {
       max-width: 1200px;
-      margin: 0 auto;
-      padding: 2rem;
+      margin: 0;
+      padding: 0;
     }
     
     /* Card Styles */
@@ -195,7 +197,7 @@
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 1.5rem;
-      margin: 2rem 0;
+      margin: 0;
     }
     
     .category-card {
@@ -1990,7 +1992,7 @@
     </nav>
   </header>
   <main>
-    <section id="loginSection" class="login-container" style="display:none;">
+    <section id="loginSection" style="display:none;">
       <div class="login-card">
         <div class="login-header">
           <div class="login-logo">
@@ -2044,7 +2046,7 @@
       </div>
     </section>
 
-    <section id="customerSection" class="login-container" style="display:none;">
+    <section id="customerSection" style="display:none;">
       <div class="admin-dashboard">
         <h2>👑 Customer Management Dashboard</h2>
         
@@ -2092,9 +2094,9 @@
       </div>
     </section>
 
-    <div id="storeSection" style="display:none;">
+    <div id="storeSection" style="display:none; width: 100%; box-sizing: border-box;">
       <!-- Customer Info Bar -->
-      <div style="background: white; padding: 1rem; border-radius: 12px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+      <div style="background: white; padding: 1rem; border-radius: 12px; margin-bottom: 0; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
         <div>
           <strong>Current Customer:</strong> <span id="currentCustomerName">Not Selected</span>
         </div>
@@ -2106,7 +2108,7 @@
       <div id="categoryGrid" class="categories"></div>
       
       <!-- Recipe Suggestions Section -->
-      <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 1.5rem; border-radius: 16px; margin-bottom: 2rem; box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);">
+      <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 1.5rem; border-radius: 16px; margin-bottom: 0; box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);">
         <h3 style="margin: 0 0 1rem; display: flex; align-items: center; gap: 0.5rem;">
           <span style="font-size: 1.5rem;">👨‍🍳</span>
           <span>Today's Recipe Suggestions</span>
@@ -2140,7 +2142,7 @@
       </div>
       
       <!-- Special Offers Section -->
-      <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1.5rem; border-radius: 16px; margin-bottom: 2rem; box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);">
+      <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1.5rem; border-radius: 16px; margin-bottom: 0; box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);">
         <h3 style="margin: 0 0 1rem; display: flex; align-items: center; gap: 0.5rem;">
           <span style="font-size: 1.5rem;">🎉</span>
           <span>Today's Special Offers</span>
@@ -2174,7 +2176,7 @@
       </div>
       
       <!-- Search and Filter Section -->
-      <div style="background: white; padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+      <div style="background: white; padding: 1.5rem; border-radius: 12px; margin-bottom: 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
         <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
           <input type="text" id="searchItems" placeholder="🔍 Search items..." style="flex: 1; min-width: 200px;">
           <select id="categoryFilter" style="width: 150px;">
@@ -2340,42 +2342,56 @@
     }
 
     function addCustomerAndContinue() {
+      if (!validateCustomerForm()) {
+        ErrorHandler.showError('Please fix the validation errors!', 'error');
+        return;
+      }
+      
       const id = document.getElementById("custId").value.trim();
       const name = document.getElementById("custName").value.trim();
       const phone = document.getElementById("custPhone").value.trim();
       const limit = parseFloat(document.getElementById("custLimit").value);
-      if (!id || !name || !phone || isNaN(limit)) return alert("Fill all fields correctly");
-
+      
       const customers = JSON.parse(localStorage.getItem("customers") || "[]");
-      if (customers.find(c => c.id === id)) return alert("Customer ID already exists");
-
-      const newCustomer = {
-        id, name, phone, limit, dueDate: new Date(Date.now() + 30*24*60*60*1000).toISOString(),
-        currentDebt: 0,
-        loyaltyPoints: 0,
-        totalSpent: 0,
-        joinDate: new Date().toISOString()
-      };
-      customers.push(newCustomer);
-      localStorage.setItem("customers", JSON.stringify(customers));
-      currentCustomerId = id;
-      currentCustomer = newCustomer;
-      
-      // Update customer name display
-      document.getElementById("currentCustomerName").textContent = name;
-      
-      loadCustomerDropdown();
-      renderCustomerList();
-      document.getElementById("customerSection").style.display = "none";
-      document.getElementById("storeSection").style.display = "block";
-      
-      // Set the selected customer in store dropdown
-      const storeDropdown = document.getElementById("customerDropdown");
-      if (storeDropdown) {
-        storeDropdown.value = id; // Set the selected customer in store dropdown
+      if (customers.find(c => c.id === id)) {
+        ErrorHandler.showError("Customer ID already exists!", 'error');
+        return;
       }
-      renderCategories();
-      showMonthlySpinStatus(); // Show spin status after adding customer
+      
+      try {
+        const newCustomer = {
+          id, name, phone, limit, dueDate: new Date(Date.now() + 30*24*60*60*1000).toISOString(),
+          currentDebt: 0,
+          loyaltyPoints: 0,
+          totalSpent: 0,
+          joinDate: new Date().toISOString()
+        };
+        customers.push(newCustomer);
+        localStorage.setItem("customers", JSON.stringify(customers));
+        currentCustomerId = id;
+        currentCustomer = newCustomer;
+        
+        // Update customer name display
+        document.getElementById("currentCustomerName").textContent = name;
+        
+        loadCustomerDropdown();
+        renderCustomerList();
+        document.getElementById("customerSection").style.display = "none";
+        document.getElementById("storeSection").style.display = "block";
+        
+        // Set the selected customer in store dropdown
+        const storeDropdown = document.getElementById("customerDropdown");
+        if (storeDropdown) {
+          storeDropdown.value = id;
+        }
+        renderCategories();
+        showMonthlySpinStatus();
+        
+        ErrorHandler.showError(`Customer ${name} added successfully!`, 'success');
+      } catch (error) {
+        ErrorHandler.showError('Failed to add customer. Please try again.', 'error');
+        console.error('Error adding customer:', error);
+      }
     }
 
     function loadCustomerDropdown() {
@@ -4631,7 +4647,7 @@
       
       let historyHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-          <h2>�� Bill History</h2>
+          <h2>📄 Bill History</h2>
           <button onclick="showMainSection()" class="btn-secondary">Back to Shopping</button>
         </div>
         
@@ -5064,11 +5080,90 @@
             <button onclick="backupCustomerData()" class="tool-btn">💾 Backup Data</button>
             <button onclick="resetAllDebts()" class="tool-btn">🔄 Reset All Debts</button>
             <button onclick="showSystemSettings()" class="tool-btn">⚙️ System Settings</button>
+            <button onclick="showDataBackup()" class="tool-btn">💾 Data Backup</button>
           </div>
         </div>
       `;
       
       document.getElementById('customerList').innerHTML = actionsHTML;
+    }
+    
+    function showDataBackup() {
+      const backupHTML = `
+        <div class="admin-section">
+          <h3>💾 Data Backup & Recovery</h3>
+          
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+            <div style="background: #f0f9ff; border: 1px solid #0ea5e9; border-radius: 12px; padding: 1.5rem;">
+              <h4 style="color: #0ea5e9; margin-bottom: 1rem;">📤 Export Data</h4>
+              <p style="color: #64748b; margin-bottom: 1rem;">Download all your data as a JSON file for backup or migration.</p>
+              <button onclick="DataManager.exportData()" class="tool-btn" style="width: 100%;">📥 Export All Data</button>
+            </div>
+            
+            <div style="background: #f0fdf4; border: 1px solid #10b981; border-radius: 12px; padding: 1.5rem;">
+              <h4 style="color: #10b981; margin-bottom: 1rem;">📥 Import Data</h4>
+              <p style="color: #64748b; margin-bottom: 1rem;">Restore data from a previously exported backup file.</p>
+              <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleImportFile(this)">
+              <button onclick="document.getElementById('importFile').click()" class="tool-btn" style="width: 100%;">📁 Choose File</button>
+            </div>
+            
+            <div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 12px; padding: 1.5rem;">
+              <h4 style="color: #f59e0b; margin-bottom: 1rem;">💾 Create Backup</h4>
+              <p style="color: #64748b; margin-bottom: 1rem;">Create a local backup in your browser's storage.</p>
+              <button onclick="DataManager.createBackup()" class="tool-btn" style="width: 100%;">💾 Create Backup</button>
+            </div>
+            
+            <div style="background: #fef2f2; border: 1px solid #ef4444; border-radius: 12px; padding: 1.5rem;">
+              <h4 style="color: #ef4444; margin-bottom: 1rem;">⚠️ Clear All Data</h4>
+              <p style="color: #64748b; margin-bottom: 1rem;">Permanently delete all data. This action cannot be undone!</p>
+              <button onclick="clearAllData()" class="tool-btn" style="width: 100%; background: #ef4444;">🗑️ Clear All Data</button>
+            </div>
+          </div>
+          
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem;">
+            <h4 style="margin-bottom: 1rem;">📋 Data Statistics</h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+              <div style="text-align: center;">
+                <div style="font-size: 1.5rem; font-weight: 600; color: #0f172a;">${JSON.parse(localStorage.getItem('customers') || '[]').length}</div>
+                <div style="color: #64748b; font-size: 0.9rem;">Customers</div>
+              </div>
+              <div style="text-align: center;">
+                <div style="font-size: 1.5rem; font-weight: 600; color: #0f172a;">${JSON.parse(localStorage.getItem('bills') || '[]').length}</div>
+                <div style="color: #64748b; font-size: 0.9rem;">Bills</div>
+              </div>
+              <div style="text-align: center;">
+                <div style="font-size: 1.5rem; font-weight: 600; color: #0f172a;">${JSON.parse(localStorage.getItem('kathaRecords') || '[]').length}</div>
+                <div style="color: #64748b; font-size: 0.9rem;">Katha Records</div>
+              </div>
+              <div style="text-align: center;">
+                <div style="font-size: 1.5rem; font-weight: 600; color: #0f172a;">${JSON.parse(localStorage.getItem('preOrders') || '[]').length}</div>
+                <div style="color: #64748b; font-size: 0.9rem;">Pre-Orders</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      document.getElementById('customerList').innerHTML = backupHTML;
+    }
+    
+    function handleImportFile(input) {
+      const file = input.files[0];
+      if (file) {
+        DataManager.importData(file);
+      }
+    }
+    
+    function clearAllData() {
+      const confirmed = confirm('⚠️ WARNING: This will permanently delete ALL data!\n\nThis includes:\n• All customers\n• All bills\n• All katha records\n• All pre-orders\n\nThis action cannot be undone!\n\nAre you absolutely sure?');
+      
+      if (confirmed) {
+        localStorage.clear();
+        showNotification('All data has been cleared!', 'success');
+        setTimeout(() => {
+          location.reload();
+        }, 2000);
+      }
     }
     
     // Individual Customer Actions
@@ -5077,7 +5172,7 @@
       const customer = customers.find(c => c.id === customerId);
       
       if (!customer) {
-        alert('Customer not found!');
+        ErrorHandler.showError('Customer not found!', 'error');
         return;
       }
       
@@ -5091,7 +5186,7 @@
         customer.limit = parseFloat(newLimit);
         
         localStorage.setItem('customers', JSON.stringify(customers));
-        alert('Customer updated successfully!');
+        ErrorHandler.showError('Customer updated successfully!', 'success');
         showCustomerList();
       }
     }
@@ -5101,7 +5196,7 @@
       const customer = customers.find(c => c.id === customerId);
       
       if (!customer) {
-        alert('Customer not found!');
+        ErrorHandler.showError('Customer not found!', 'error');
         return;
       }
       
@@ -5110,7 +5205,7 @@
       if (newLimit && !isNaN(newLimit)) {
         customer.limit = parseFloat(newLimit);
         localStorage.setItem('customers', JSON.stringify(customers));
-        alert(`Credit limit updated to ₹${newLimit}`);
+        ErrorHandler.showError(`Credit limit updated to ₹${newLimit}`, 'success');
         showCustomerList();
       }
     }
@@ -5120,7 +5215,7 @@
       const customer = customers.find(c => c.id === customerId);
       
       if (!customer) {
-        alert('Customer not found!');
+        ErrorHandler.showError('Customer not found!', 'error');
         return;
       }
       
@@ -5130,7 +5225,7 @@
         customer.suspended = true;
         customer.suspendedDate = new Date().toISOString();
         localStorage.setItem('customers', JSON.stringify(customers));
-        alert(`Customer ${customer.name} has been suspended.`);
+        ErrorHandler.showError(`Customer ${customer.name} has been suspended.`, 'success');
         showCustomerList();
       }
     }
@@ -5140,7 +5235,7 @@
       const customer = customers.find(c => c.id === customerId);
       
       if (!customer) {
-        alert('Customer not found!');
+        ErrorHandler.showError('Customer not found!', 'error');
         return;
       }
       
@@ -5149,7 +5244,7 @@
       if (action) {
         const updatedCustomers = customers.filter(c => c.id !== customerId);
         localStorage.setItem('customers', JSON.stringify(updatedCustomers));
-        alert(`Customer ${customer.name} has been deleted.`);
+        ErrorHandler.showError(`Customer ${customer.name} has been deleted.`, 'success');
         showCustomerList();
       }
     }
@@ -5160,7 +5255,7 @@
       const customer = customers.find(c => c.id === customerId);
       
       if (!customer) {
-        alert('Customer not found!');
+        ErrorHandler.showError('Customer not found!', 'error');
         return;
       }
       
@@ -5198,7 +5293,7 @@
       const customer = customers.find(c => c.id === customerId);
       
       if (!customer) {
-        alert('Customer not found!');
+        ErrorHandler.showError('Customer not found!', 'error');
         return;
       }
       
@@ -5209,7 +5304,7 @@
         customer.currentDebt = Math.max(0, customer.currentDebt - amount);
         
         localStorage.setItem('customers', JSON.stringify(customers));
-        alert(`Payment of ₹${amount} collected. Remaining debt: ₹${customer.currentDebt}`);
+        ErrorHandler.showError(`Payment of ₹${amount} collected. Remaining debt: ₹${customer.currentDebt}`, 'success');
         showDebtManagement();
       }
     }
@@ -5219,7 +5314,7 @@
       const customer = customers.find(c => c.id === customerId);
       
       if (!customer) {
-        alert('Customer not found!');
+        ErrorHandler.showError('Customer not found!', 'error');
         return;
       }
       
@@ -5228,7 +5323,7 @@
       if (extension && !isNaN(extension)) {
         customer.limit = parseFloat(extension);
         localStorage.setItem('customers', JSON.stringify(customers));
-        alert(`Credit limit extended to ₹${extension}`);
+        ErrorHandler.showError(`Credit limit extended to ₹${extension}`, 'success');
         showDebtManagement();
       }
     }
@@ -5238,11 +5333,11 @@
       const customer = customers.find(c => c.id === customerId);
       
       if (!customer) {
-        alert('Customer not found!');
+        ErrorHandler.showError('Customer not found!', 'error');
         return;
       }
       
-      alert(`📱 Reminder sent to ${customer.name} (${customer.phone})\n\nMessage: "Dear ${customer.name}, you have an outstanding debt of ₹${customer.currentDebt}. Please visit our store to settle your account."`);
+      ErrorHandler.showError(`📱 Reminder sent to ${customer.name} (${customer.phone})\n\nMessage: "Dear ${customer.name}, you have an outstanding debt of ₹${customer.currentDebt}. Please visit our store to settle your account."`, 'success');
     }
     
     // Bulk Actions
@@ -5251,14 +5346,14 @@
       const overdueCustomers = customers.filter(c => c.currentDebt > 0);
       
       if (overdueCustomers.length === 0) {
-        alert('No customers with outstanding debt.');
+        ErrorHandler.showError('No customers with outstanding debt.', 'warning');
         return;
       }
       
       const action = confirm(`Send reminders to ${overdueCustomers.length} customers with outstanding debt?`);
       
       if (action) {
-        alert(`📱 Bulk reminders sent to ${overdueCustomers.length} customers!`);
+        ErrorHandler.showError(`📱 Bulk reminders sent to ${overdueCustomers.length} customers!`, 'success');
       }
     }
     
@@ -5519,6 +5614,82 @@ ${customers.map(c => `${c.name}: ₹${c.currentDebt}`).join('\n')}
       alert('Logo reset to default successfully!');
     }
 
+    // Data Backup & Recovery System
+    class DataManager {
+      static exportData() {
+        const data = {
+          customers: JSON.parse(localStorage.getItem('customers') || '[]'),
+          kathaRecords: JSON.parse(localStorage.getItem('kathaRecords') || '[]'),
+          bills: JSON.parse(localStorage.getItem('bills') || '[]'),
+          preOrders: JSON.parse(localStorage.getItem('preOrders') || '[]'),
+          exportDate: new Date().toISOString(),
+          version: '1.0.0'
+        };
+        
+        const dataStr = JSON.stringify(data, null, 2);
+        const dataBlob = new Blob([dataStr], {type: 'application/json'});
+        
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(dataBlob);
+        link.download = `smart-store-backup-${new Date().toISOString().split('T')[0]}.json`;
+        link.click();
+        
+        showNotification('Data exported successfully!', 'success');
+      }
+      
+      static importData(file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          try {
+            const data = JSON.parse(e.target.result);
+            
+            if (data.customers) localStorage.setItem('customers', JSON.stringify(data.customers));
+            if (data.kathaRecords) localStorage.setItem('kathaRecords', JSON.stringify(data.kathaRecords));
+            if (data.bills) localStorage.setItem('bills', JSON.stringify(data.bills));
+            if (data.preOrders) localStorage.setItem('preOrders', JSON.stringify(data.preOrders));
+            
+            showNotification('Data imported successfully!', 'success');
+            location.reload(); // Refresh to show imported data
+          } catch (error) {
+            showNotification('Invalid backup file format!', 'error');
+          }
+        };
+        reader.readAsText(file);
+      }
+      
+      static createBackup() {
+        const backup = {
+          customers: JSON.parse(localStorage.getItem('customers') || '[]'),
+          kathaRecords: JSON.parse(localStorage.getItem('kathaRecords') || '[]'),
+          bills: JSON.parse(localStorage.getItem('bills') || '[]'),
+          preOrders: JSON.parse(localStorage.getItem('preOrders') || '[]'),
+          backupDate: new Date().toISOString()
+        };
+        
+        localStorage.setItem('backup_' + Date.now(), JSON.stringify(backup));
+        showNotification('Backup created successfully!', 'success');
+      }
+      
+      static restoreBackup(backupKey) {
+        const backup = localStorage.getItem(backupKey);
+        if (backup) {
+          try {
+            const data = JSON.parse(backup);
+            
+            if (data.customers) localStorage.setItem('customers', JSON.stringify(data.customers));
+            if (data.kathaRecords) localStorage.setItem('kathaRecords', JSON.stringify(data.kathaRecords));
+            if (data.bills) localStorage.setItem('bills', JSON.stringify(data.bills));
+            if (data.preOrders) localStorage.setItem('preOrders', JSON.stringify(data.preOrders));
+            
+            showNotification('Backup restored successfully!', 'success');
+            location.reload();
+          } catch (error) {
+            showNotification('Failed to restore backup!', 'error');
+          }
+        }
+      }
+    }
+    
     // Enhanced Credit Management System with Automatic Reminders
     
     // Daily Reminder System
@@ -6031,7 +6202,7 @@ ${customers.map(c => `${c.name}: ₹${c.currentDebt}`).join('\n')}
       const customer = customers.find(c => c.id === customerId);
       
       if (!customer) {
-        alert('Customer not found!');
+        ErrorHandler.showError('Customer not found!', 'error');
         return;
       }
       
@@ -6066,7 +6237,7 @@ ${customers.map(c => `${c.name}: ₹${c.currentDebt}`).join('\n')}
       
       // In a real application, this would send an SMS or email
       // For now, we'll show it in an alert
-      alert(`📱 Reminder sent to ${customer.name} (${customer.phone})\n\n${message}`);
+      ErrorHandler.showError(`📱 Reminder sent to ${customer.name} (${customer.phone})\n\n${message}`, 'success');
       
       // Log the reminder
       const reminders = JSON.parse(localStorage.getItem('reminders') || '[]');
@@ -6080,8 +6251,6 @@ ${customers.map(c => `${c.name}: ₹${c.currentDebt}`).join('\n')}
         type: overdueRecords.length > 0 ? 'overdue' : 'reminder'
       });
       localStorage.setItem('reminders', JSON.stringify(reminders));
-      
-      showNotification(`📱 Reminder sent to ${customer.name}`, 'success');
     }
 
     // Pre-Order System with Token Management
@@ -6595,7 +6764,7 @@ ${customers.map(c => `${c.name}: ₹${c.currentDebt}`).join('\n')}
     // Place Pre-Order
     function placePreOrder(customerId) {
       if (preOrderCart.length === 0) {
-        alert('Your cart is empty! Please add some items.');
+        ErrorHandler.showError('Your cart is empty! Please add some items.', 'error');
         return;
       }
       
@@ -6603,7 +6772,7 @@ ${customers.map(c => `${c.name}: ₹${c.currentDebt}`).join('\n')}
       const customer = customers.find(c => c.id === customerId);
       
       if (!customer) {
-        alert('Customer not found!');
+        ErrorHandler.showError('Customer not found!', 'error');
         return;
       }
       
@@ -6611,7 +6780,7 @@ ${customers.map(c => `${c.name}: ₹${c.currentDebt}`).join('\n')}
       const newDebt = customer.currentDebt + total;
       
       if (newDebt > customer.limit) {
-        alert(`Credit limit exceeded! Current debt: ₹${customer.currentDebt}, Limit: ₹${customer.limit}`);
+        ErrorHandler.showError(`Credit limit exceeded! Current debt: ₹${customer.currentDebt}, Limit: ₹${customer.limit}`, 'error');
         return;
       }
       
