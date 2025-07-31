@@ -23,6 +23,21 @@
       line-height: 1.6;
       margin: 0;
       padding: 0;
+      position: relative;
+      overflow-x: hidden;
+    }
+    
+    /* Remove any spacing when homepage is visible */
+    body:has(#homepage[style*="display: block"]) {
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow: hidden !important;
+    }
+    
+    html:has(#homepage[style*="display: block"]) {
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow: hidden !important;
     }
     
     /* Header Styles */
@@ -716,7 +731,34 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
+        justify-content: flex-start;
+        padding-top: 2rem;
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100vh !important;
+        margin: 0 !important;
+        box-sizing: border-box;
+        z-index: 10 !important;
+        overflow: hidden;
+      }
+      
+      /* Override any main element conflicts */
+      main:has(#homepage) {
+        padding: 0 !important;
+        margin: 0 !important;
+        min-height: auto !important;
+      }
+      
+      /* Hide header when homepage is visible */
+      #homepage[style*="display: block"] ~ header,
+      #homepage[style*="display: block"] + header {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        z-index: -1 !important;
+        pointer-events: none !important;
       }
       
       .hero-section {
@@ -1984,10 +2026,10 @@
         <li><a href="#" id="viewKatha">📋 Katha</a></li>
         <li><a href="#" id="addCustomer">👤 Add Customer</a></li>
         <li><a href="#" id="stockManagement">📦 Stock</a></li>
-                              <li><a href="#" id="billHistory">📄 Bill History</a></li>
-                      <li><a href="#" id="contactLink">📞 Contact</a></li>
-                      <li><a href="#" id="monthlySpin" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: white; padding: 0.5rem 1rem; border-radius: 8px;">🎰 Monthly Spin</a></li>
-                      <li><a href="#" id="backToHome">🏠 Home</a></li>
+        <li><a href="#" id="billHistory">📄 Bill History</a></li>
+        <li><a href="#" id="profitMargins" onclick="showProfitMargins();" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: white; padding: 0.5rem 1rem; border-radius: 8px;">💰 Profits</a></li>
+        <li><a href="#" id="contactLink">📞 Contact</a></li>
+        <li><a href="#" id="backToHome">🏠 Home</a></li>
       </ul>
     </nav>
   </header>
@@ -2205,8 +2247,8 @@
     </div>
   </main>
 
-  <!-- Add this section -->
-  <section id="homepage" class="landing-page">
+  <!-- Main Homepage Section -->
+  <section id="homepage" class="landing-page" style="position: absolute; top: 0; left: 0; width: 100%; height: 100vh; z-index: 10;">
     <div class="hero-section">
       <div class="hero-content">
         <h1>🛍️ Smart General Store</h1>
@@ -2997,6 +3039,13 @@
     }
 
     function showMainSection() {
+      // Show the homepage content
+      document.getElementById('homepage').style.display = 'block';
+      document.getElementById('storeSection').style.display = 'none';
+      document.getElementById('customerSection').style.display = 'none';
+      document.getElementById('loginSection').style.display = 'none';
+      
+      // Reset other sections
       document.getElementById('categoryGrid').style.display = 'grid';
       document.getElementById('itemsSection').style.display = 'block';
       document.getElementById('cartSection').style.display = 'none';
@@ -5037,7 +5086,7 @@
       
       const debtHTML = `
         <div class="admin-section">
-          <h3>�� Debt Management</h3>
+          <h3>📊 Debt Management</h3>
           
           <div class="debt-summary">
             <div class="summary-card">

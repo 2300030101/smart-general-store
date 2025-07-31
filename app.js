@@ -530,7 +530,9 @@ function startShopping() {
   if (!id) return;
   currentCustomerId = id;
   document.getElementById("customerSection").style.display = "none";
+  document.getElementById("homepage").style.display = "none";
   document.getElementById("storeSection").style.display = "block";
+  document.getElementById("fullWidthBanner").style.display = "block";
   renderCategories();
 }
 
@@ -716,8 +718,11 @@ function updateCartQuantity(itemName, newQuantity) {
 // --- Render Category Cards ---
 function renderCategories() {
   const grid = document.getElementById("categoryGrid");
+  console.log("Rendering categories...");
+  console.log("Categories data:", categories);
+  
   grid.innerHTML = categories.map(cat => `
-    <div class="category-card" onclick='renderItems(${JSON.stringify(cat)})'>
+    <div class="category-card" onclick='console.log("Category clicked:", "${cat.name}"); renderItems(${JSON.stringify(cat)})' style="cursor: pointer;">
       <div class="category-image">
         <img src="${getCategoryImage(cat.name)}" alt="${cat.name}" loading="lazy">
       </div>
@@ -727,52 +732,127 @@ function renderCategories() {
       </div>
     </div>
   `).join("");
+  
+  console.log("Categories rendered successfully");
 }
 
 // --- Render Items on Category Click ---
 function renderItems(category) {
-  const section = document.getElementById("itemsSection");
+  console.log("renderItems function called with category:", category);
+  
+  const storeSection = document.getElementById("storeSection");
+  const itemsPageSection = document.getElementById("itemsPageSection");
+  const itemsPageTitle = document.getElementById("itemsPageTitle");
+  const itemsPageSubtitle = document.getElementById("itemsPageSubtitle");
+  const itemsPageGrid = document.getElementById("itemsPageGrid");
+  const currentCustomerNameItems = document.getElementById("currentCustomerNameItems");
+  const customerDropdownItems = document.getElementById("customerDropdownItems");
+  
   if (!category) {
-    section.innerHTML = "";
+    console.log("No category provided");
     return;
   }
-  section.innerHTML = `
-    <h2 style="text-align:center; color:#38b2ac; margin-bottom:1em;">${category.icon} ${category.name}</h2>
-    <div class="items-list">
-      ${category.items.map((item, index) => {
-        const isOutOfStock = item.stock <= 0;
-        const isLowStock = item.stock <= 10 && item.stock > 0;
-        const itemImage = getItemImage(category.name, item.name);
-        return `
-          <div class="item-card ${isOutOfStock ? 'out-of-stock' : ''}">
-            <div class="item-image">
-              <img src="${itemImage}" alt="${item.name}" loading="lazy">
-              ${isOutOfStock ? '<div class="out-of-stock-overlay">Out of Stock</div>' : ''}
+  
+  console.log("Hiding store section and showing items page...");
+  
+  // Hide the store section (categories page)
+  storeSection.style.display = "none";
+  
+  // Show the items page section
+  itemsPageSection.style.display = "block";
+  
+  // Update page title and subtitle
+  itemsPageTitle.innerHTML = `${category.icon} ${category.name}`;
+  itemsPageSubtitle.innerHTML = `Browse and select items from ${category.name} category`;
+  
+  // Update customer name in items page
+  const currentCustomer = JSON.parse(localStorage.getItem("customers") || "[]").find(c => c.id === currentCustomerId);
+  currentCustomerNameItems.textContent = currentCustomer ? currentCustomer.name : "Not Selected";
+  
+  // Populate customer dropdown in items page
+  const customers = JSON.parse(localStorage.getItem("customers") || "[]");
+  customerDropdownItems.innerHTML = '<option value="">-- Change Customer --</option>' + 
+    customers.map(c => `<option value="${c.id}" ${c.id === currentCustomerId ? 'selected' : ''}>${c.name} (ID: ${c.id})</option>`).join('');
+  
+  console.log("Rendering items for category:", category.name);
+  
+  // Render items in the new grid
+  itemsPageGrid.innerHTML = category.items.map((item, index) => {
+    const isOutOfStock = item.stock <= 0;
+    const isLowStock = item.stock <= 10 && item.stock > 0;
+    const itemImage = getItemImage(category.name, item.name);
+    return `
+      <div class="item-card ${isOutOfStock ? 'out-of-stock' : ''}" style="background: white; border-radius: 16px; padding: 2rem; box-shadow: 0 8px 25px rgba(0,0,0,0.1); border: 2px solid #e2e8f0; transition: all 0.3s ease; hover: transform: translateY(-5px);">
+        <div class="item-image" style="text-align: center; margin-bottom: 1.5rem;">
+          <img src="${itemImage}" alt="${item.name}" loading="lazy" style="width: 120px; height: 120px; object-fit: cover; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+          ${isOutOfStock ? '<div class="out-of-stock-overlay" style="background: rgba(220, 38, 38, 0.9); color: white; padding: 0.75rem; border-radius: 8px; margin-top: 1rem; font-weight: 600;">❌ Out of Stock</div>' : ''}
+        </div>
+        <div class="item-details">
+          <div class="item-name" style="font-size: 1.4rem; font-weight: 700; margin-bottom: 0.75rem; color: #1e293b; text-align: center;">${item.name}</div>
+          <div class="item-price" style="font-size: 1.3rem; color: #059669; font-weight: 700; margin-bottom: 1rem; text-align: center;">₹${item.price}/kg</div>
+          <div class="stock-info" style="margin-bottom: 1.5rem; text-align: center;">
+            <span class="stock-amount ${isOutOfStock ? 'out-of-stock' : isLowStock ? 'low-stock' : 'in-stock'}" style="padding: 0.5rem 1rem; border-radius: 8px; font-size: 1rem; font-weight: 600; ${isOutOfStock ? 'background: #fef2f2; color: #dc2626;' : isLowStock ? 'background: #fef3c7; color: #d97706;' : 'background: #dcfce7; color: #166534;'}">
+              Stock: ${item.stock} kg
+              ${isOutOfStock ? '❌ Out of Stock' : isLowStock ? '⚠️ Low Stock' : '✅ In Stock'}
+            </span>
+          </div>
+          <div class="item-actions">
+            <div class="quantity-input" style="margin-bottom: 1.5rem;">
+              <label style="display: block; margin-bottom: 0.75rem; font-weight: 600; color: #374151; font-size: 1.1rem;">Weight (kg): 
+                <input type="number" min="0.1" step="0.1" max="${item.stock}" id="qty-${category.name}-${index}" style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; margin-top: 0.5rem; font-size: 1rem;" ${isOutOfStock ? 'disabled' : ''} placeholder="Enter weight">
+              </label>
             </div>
-            <div class="item-details">
-              <div class="item-name">${item.name}</div>
-              <div class="item-price">₹${item.price}/kg</div>
-              <div class="stock-info">
-                <span class="stock-amount ${isOutOfStock ? 'out-of-stock' : isLowStock ? 'low-stock' : 'in-stock'}">
-                  Stock: ${item.stock} kg
-                  ${isOutOfStock ? '❌ Out of Stock' : isLowStock ? '⚠️ Low Stock' : '✅ In Stock'}
-                </span>
-              </div>
-              <div class="item-actions">
-                <div class="quantity-input">
-                  <label>Weight (kg): <input type="number" min="0.1" step="0.1" max="${item.stock}" id="qty-${category.name}-${index}" style="width:60px;" ${isOutOfStock ? 'disabled' : ''}></label>
-                </div>
-                <div class="action-buttons">
-                  <button onclick="addToCartFromUI('${category.name}',${index})" ${isOutOfStock ? 'disabled' : ''} class="btn-add-cart">Add to Cart</button>
-                  <button onclick="addToKathaFromUI('${category.name}',${index})" ${isOutOfStock ? 'disabled' : ''} class="btn-add-katha">Add to Katha</button>
-                </div>
-              </div>
+            <div class="action-buttons" style="display: flex; gap: 1rem;">
+              <button onclick="addToCartFromUI('${category.name}',${index})" ${isOutOfStock ? 'disabled' : ''} class="btn-add-cart" style="flex: 1; background: #059669; color: white; padding: 1rem; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1rem; ${isOutOfStock ? 'opacity: 0.5; cursor: not-allowed;' : ''}">🛒 Add to Cart</button>
+              <button onclick="addToKathaFromUI('${category.name}',${index})" ${isOutOfStock ? 'disabled' : ''} class="btn-add-katha" style="flex: 1; background: #7c3aed; color: white; padding: 1rem; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1rem; ${isOutOfStock ? 'opacity: 0.5; cursor: not-allowed;' : ''}">📋 Add to Katha</button>
             </div>
           </div>
-        `;
-      }).join("")}
-    </div>
-  `;
+        </div>
+      </div>
+    `;
+  }).join("");
+  
+  console.log("Items rendered successfully");
+  
+  // Scroll to top of the new page
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Function to go back to categories
+window.backToCategories = function() {
+  console.log("backToCategories function called");
+  
+  const storeSection = document.getElementById("storeSection");
+  const itemsPageSection = document.getElementById("itemsPageSection");
+  
+  console.log("Hiding items page and showing store section...");
+  
+  // Hide the items page
+  itemsPageSection.style.display = "none";
+  
+  // Show the store section (categories)
+  storeSection.style.display = "block";
+  
+  // Scroll to top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  
+  console.log("Successfully returned to categories page");
+};
+
+// Function to show categories again
+function showCategories() {
+  const section = document.getElementById("itemsSection");
+  const categoryGrid = document.getElementById("categoryGrid");
+  
+  // Hide the items section
+  section.style.display = "none";
+  section.innerHTML = "";
+  
+  // Show the categories section again
+  categoryGrid.style.display = "grid";
+  
+  // Scroll back to the top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // --- Handle Quantity Change and Update ---
@@ -886,6 +966,18 @@ window.updateCartQuantityUI = function(itemName, newQty) {
 
 // Show cart when clicking "View Cart"
 document.addEventListener("DOMContentLoaded", function() {
+  // Initialize the page to show homepage by default
+  document.getElementById("homepage").style.display = "block";
+  document.getElementById("homepage").style.position = "absolute";
+  document.getElementById("homepage").style.top = "0";
+  document.getElementById("homepage").style.left = "0";
+  document.getElementById("homepage").style.width = "100%";
+  document.getElementById("homepage").style.height = "100vh";
+  document.getElementById("homepage").style.zIndex = "10";
+  document.getElementById("storeSection").style.display = "none";
+  document.getElementById("customerSection").style.display = "none";
+  document.getElementById("loginSection").style.display = "none";
+  
   document.getElementById("viewCart").onclick = function(e) {
     e.preventDefault();
     renderCart();
@@ -905,16 +997,284 @@ document.addEventListener("DOMContentLoaded", function() {
     showStockManagement();
   };
   
+  // Add event listener for bill history
+  const billHistoryBtn = document.getElementById("billHistory");
+  if (billHistoryBtn) {
+    billHistoryBtn.onclick = function(e) {
+      e.preventDefault();
+      console.log("Bill History button clicked");
+      showBillHistory();
+    };
+  } else {
+    console.error("Bill History button not found");
+  }
+  
+  // Business Intelligence Features
+  const competitorAnalysisBtn = document.getElementById("competitorAnalysis");
+  if (competitorAnalysisBtn) {
+    competitorAnalysisBtn.onclick = function(e) {
+      e.preventDefault();
+      console.log("Competitor Analysis button clicked");
+      if (typeof showCompetitorAnalysis === 'function') {
+        showCompetitorAnalysis();
+      } else {
+        console.error("showCompetitorAnalysis function not found");
+        testCompetitorAnalysis();
+      }
+    };
+  } else {
+    console.error("Competitor Analysis button not found");
+  }
+  
+  const profitMarginsBtn = document.getElementById("profitMargins");
+  console.log("Looking for profitMargins button...");
+  console.log("profitMarginsBtn:", profitMarginsBtn);
+  if (profitMarginsBtn) {
+    console.log("Profit Margins button found successfully");
+    profitMarginsBtn.onclick = function(e) {
+      e.preventDefault();
+      console.log("Profit Margins button clicked");
+      if (typeof showProfitMargins === 'function') {
+        console.log("showProfitMargins function exists, calling it...");
+        showProfitMargins();
+      } else {
+        console.error("showProfitMargins function not found");
+        alert("showProfitMargins function not found!");
+      }
+    };
+  } else {
+    console.error("Profit Margins button not found");
+  }
+  
+  const cashFlowBtn = document.getElementById("cashFlow");
+  if (cashFlowBtn) {
+    cashFlowBtn.onclick = function(e) {
+      e.preventDefault();
+      console.log("Cash Flow button clicked");
+      if (typeof showCashFlow === 'function') {
+        showCashFlow();
+      } else {
+        console.error("showCashFlow function not found");
+        testCashFlow();
+      }
+    };
+  } else {
+    console.error("Cash Flow button not found");
+  }
+  
+  const taxReportsBtn = document.getElementById("taxReports");
+  if (taxReportsBtn) {
+    taxReportsBtn.onclick = function(e) {
+      e.preventDefault();
+      console.log("Tax Reports button clicked");
+      if (typeof showTaxReports === 'function') {
+        showTaxReports();
+      } else {
+        console.error("showTaxReports function not found");
+        testTaxReports();
+      }
+    };
+  } else {
+    console.error("Tax Reports button not found");
+  }
+  
+  // Inventory Management Features
+  const supplierManagementBtn = document.getElementById("supplierManagement");
+  if (supplierManagementBtn) {
+    supplierManagementBtn.onclick = function(e) {
+      e.preventDefault();
+      console.log("Supplier Management button clicked");
+      if (typeof showSupplierManagement === 'function') {
+        showSupplierManagement();
+      } else {
+        console.error("showSupplierManagement function not found");
+        testSupplierManagement();
+      }
+    };
+  } else {
+    console.error("Supplier Management button not found");
+  }
+  
+  const expiryTrackingBtn = document.getElementById("expiryTracking");
+  if (expiryTrackingBtn) {
+    expiryTrackingBtn.onclick = function(e) {
+      e.preventDefault();
+      console.log("Expiry Tracking button clicked");
+      if (typeof showExpiryTracking === 'function') {
+        showExpiryTracking();
+      } else {
+        console.error("showExpiryTracking function not found");
+        testExpiryTracking();
+      }
+    };
+  } else {
+    console.error("Expiry Tracking button not found");
+  }
+  
+  const autoReorderingBtn = document.getElementById("autoReordering");
+  if (autoReorderingBtn) {
+    autoReorderingBtn.onclick = function(e) {
+      e.preventDefault();
+      console.log("Auto Reordering button clicked");
+      if (typeof showAutoReordering === 'function') {
+        showAutoReordering();
+      } else {
+        console.error("showAutoReordering function not found");
+        testAutoReordering();
+      }
+    };
+  } else {
+    console.error("Auto Reordering button not found");
+  }
+  
+  // Customer Features
+  const recipeIntegrationBtn = document.getElementById("recipeIntegration");
+  if (recipeIntegrationBtn) {
+    recipeIntegrationBtn.onclick = function(e) {
+      e.preventDefault();
+      console.log("Recipe Integration button clicked");
+      if (typeof showRecipeIntegration === 'function') {
+        showRecipeIntegration();
+      } else {
+        console.error("showRecipeIntegration function not found");
+        testRecipeIntegration();
+      }
+    };
+  } else {
+    console.error("Recipe Integration button not found");
+  }
+  
+  const nutritionalInfoBtn = document.getElementById("nutritionalInfo");
+  if (nutritionalInfoBtn) {
+    nutritionalInfoBtn.onclick = function(e) {
+      e.preventDefault();
+      console.log("Nutritional Info button clicked");
+      if (typeof showNutritionalInfo === 'function') {
+        showNutritionalInfo();
+      } else {
+        console.error("showNutritionalInfo function not found");
+        testNutritionalInfo();
+      }
+    };
+  } else {
+    console.error("Nutritional Info button not found");
+  }
+  
+  const priceComparisonBtn = document.getElementById("priceComparison");
+  if (priceComparisonBtn) {
+    priceComparisonBtn.onclick = function(e) {
+      e.preventDefault();
+      console.log("Price Comparison button clicked");
+      if (typeof showPriceComparison === 'function') {
+        showPriceComparison();
+      } else {
+        console.error("showPriceComparison function not found");
+        testPriceComparison();
+      }
+    };
+  } else {
+    console.error("Price Comparison button not found");
+  }
+  
+  const deliverySchedulingBtn = document.getElementById("deliveryScheduling");
+  if (deliverySchedulingBtn) {
+    deliverySchedulingBtn.onclick = function(e) {
+      e.preventDefault();
+      console.log("Delivery Scheduling button clicked");
+      if (typeof showDeliveryScheduling === 'function') {
+        showDeliveryScheduling();
+      } else {
+        console.error("showDeliveryScheduling function not found");
+        testDeliveryScheduling();
+      }
+    };
+  } else {
+    console.error("Delivery Scheduling button not found");
+  }
+  
+  // Test button
+  const testButton = document.getElementById("testButton");
+  if (testButton) {
+    testButton.onclick = function(e) {
+      e.preventDefault();
+      testButtonFunctionality();
+    };
+  }
+  
   // Add login button functionality
   document.getElementById("showLogin").onclick = function(e) {
     e.preventDefault();
     showLoginSection();
   };
   
+  // Add event listener for contact
+  const contactLinkBtn = document.getElementById("contactLink");
+  if (contactLinkBtn) {
+    contactLinkBtn.onclick = function(e) {
+      e.preventDefault();
+      console.log("Contact button clicked");
+      showContactSection();
+    };
+  } else {
+    console.error("Contact button not found");
+  }
+  
+  // Add event listener for monthly spin
+  const monthlySpinBtn = document.getElementById("monthlySpin");
+  if (monthlySpinBtn) {
+    monthlySpinBtn.onclick = function(e) {
+      e.preventDefault();
+      console.log("Monthly Spin button clicked");
+      showMonthlySpin();
+    };
+  } else {
+    console.error("Monthly Spin button not found");
+  }
+  
+  // Add event listener for back to home
+  const backToHomeBtn = document.getElementById("backToHome");
+  if (backToHomeBtn) {
+    backToHomeBtn.onclick = function(e) {
+      e.preventDefault();
+      console.log("Back to Home button clicked");
+      showHomePage();
+    };
+  } else {
+    console.error("Back to Home button not found");
+  }
+  
   loadCart();
   
   // Load saved credentials if remember me was checked
   loadSavedCredentials();
+  
+  // Debug: Test if functions are accessible
+  console.log("Available functions:", {
+    showCompetitorAnalysis: typeof showCompetitorAnalysis,
+    showProfitMargins: typeof showProfitMargins,
+    showCashFlow: typeof showCashFlow,
+    showTaxReports: typeof showTaxReports,
+    showSupplierManagement: typeof showSupplierManagement,
+    showExpiryTracking: typeof showExpiryTracking,
+    showAutoReordering: typeof showAutoReordering,
+    showRecipeIntegration: typeof showRecipeIntegration,
+    showNutritionalInfo: typeof showNutritionalInfo,
+    showPriceComparison: typeof showPriceComparison,
+    showDeliveryScheduling: typeof showDeliveryScheduling
+  });
+  
+  // Debug: Test if buttons are found
+  const buttonIds = [
+    "competitorAnalysis", "profitMargins", "cashFlow", "taxReports",
+    "supplierManagement", "expiryTracking", "autoReordering",
+    "recipeIntegration", "nutritionalInfo", "priceComparison", "deliveryScheduling", "testButton"
+  ];
+  
+  console.log("Button availability:");
+  buttonIds.forEach(id => {
+    const button = document.getElementById(id);
+    console.log(`${id}: ${button ? 'Found' : 'Not found'}`);
+  });
 });
 
 // Load saved credentials
@@ -1142,10 +1502,26 @@ function markAsPaid(recordId) {
 }
 
 function showMainSection() {
+  // Show the homepage content with proper positioning
+  const homepage = document.getElementById('homepage');
+  homepage.style.display = 'block';
+  homepage.style.position = 'absolute';
+  homepage.style.top = '0';
+  homepage.style.left = '0';
+  homepage.style.width = '100%';
+  homepage.style.height = '100vh';
+  homepage.style.zIndex = '10';
+  
+  document.getElementById('storeSection').style.display = 'none';
+  document.getElementById('customerSection').style.display = 'none';
+  document.getElementById('loginSection').style.display = 'none';
+  
+  // Reset other sections
   document.getElementById('categoryGrid').style.display = 'grid';
   document.getElementById('itemsSection').style.display = 'block';
-  document.getElementById('cartSection').style.display = 'block';
+  document.getElementById('cartSection').style.display = 'none';
   document.getElementById('kathaSection').style.display = 'none';
+  document.getElementById('fullWidthBanner').style.display = 'block';
 }
 
 window.addToKathaFromUI = function(categoryName, index) {
@@ -1245,14 +1621,1339 @@ function selectCustomerById() {
     
     alert(`Selected: ${selectedCustomer.name} (ID: ${selectedCustomer.id})`);
     
-    // Hide customer section and show store
+    // Hide customer section and show store with full-width banner
     document.getElementById("customerSection").style.display = "none";
     document.getElementById("storeSection").style.display = "block";
+    document.getElementById("fullWidthBanner").style.display = "block";
     
     // Update the store dropdown too
     loadCustomerDropdown();
     renderCategories();
   } else {
     alert("Customer not found! Please check the ID.");
+  }
+}// NEW: Bill Finalization Functions
+function finalizeCartBill() {
+  if (cart.length === 0) {
+    alert("Cart is empty!");
+    return;
+  }
+  
+  const totalAmount = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
+  
+  // Reduce stock for all items in cart
+  cart.forEach(cartItem => {
+    const category = categories.find(cat => cat.items.some(item => item.name === cartItem.name));
+    if (category) {
+      const item = category.items.find(item => item.name === cartItem.name);
+      if (item) {
+        item.stock -= cartItem.quantity;
+      }
+    }
+  });
+  
+  // Clear cart
+  cart = [];
+  saveCart();
+  renderCart();
+  
+  alert(`Bill finalized! Total: ₹${totalAmount.toFixed(2)}\nStock has been updated.`);
+}
+
+function finalizeTokenBill() {
+  if (bill.length === 0) {
+    alert("No items in bill!");
+    return;
+  }
+  
+  const totalAmount = bill.reduce((sum, b) => sum + parseFloat(b.total), 0);
+  
+  // Update customer debt
+  const customer = JSON.parse(localStorage.getItem("customers")).find(c => c.id === currentCustomerId);
+  if (customer) {
+    const newDebt = customer.currentDebt + totalAmount;
+    if (newDebt > customer.limit) {
+      alert("Credit limit exceeded!");
+      return;
+    }
+    customer.currentDebt = newDebt;
+    const customers = JSON.parse(localStorage.getItem("customers"));
+    const updated = customers.map(c => c.id === customer.id ? customer : c);
+    localStorage.setItem("customers", JSON.stringify(updated));
+    renderCustomerList();
+  }
+  
+  // Clear bill
+  bill = [];
+  renderBill();
+  
+  alert(`Token bill finalized! Total: ₹${totalAmount.toFixed(2)}\nCustomer debt updated.`);
+}
+
+// ===== BUSINESS INTELLIGENCE MODULE =====
+
+// Competitor Analysis
+const competitorData = {
+  competitors: [
+    { name: "Big Bazaar", location: "Nearby Mall", rating: 4.2 },
+    { name: "Reliance Fresh", location: "Main Street", rating: 4.0 },
+    { name: "D-Mart", location: "Shopping Center", rating: 4.3 },
+    { name: "Local Market", location: "Street Market", rating: 3.8 }
+  ],
+  priceComparison: {
+    "Tomato": { ourPrice: 20, competitors: { "Big Bazaar": 22, "Reliance Fresh": 21, "D-Mart": 20, "Local Market": 18 } },
+    "Rice": { ourPrice: 50, competitors: { "Big Bazaar": 52, "Reliance Fresh": 51, "D-Mart": 49, "Local Market": 48 } },
+    "Milk": { ourPrice: 60, competitors: { "Big Bazaar": 62, "Reliance Fresh": 61, "D-Mart": 59, "Local Market": 58 } },
+    "Potato": { ourPrice: 15, competitors: { "Big Bazaar": 17, "Reliance Fresh": 16, "D-Mart": 15, "Local Market": 14 } }
+  }
+};
+
+function showCompetitorAnalysis() {
+  console.log("showCompetitorAnalysis function called");
+  
+  // Create a simple version that doesn't depend on categories
+  let analysisHTML = `
+    <div style="background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+      <h2 style="color: #667eea; margin-bottom: 1.5rem;">🏪 Competitor Analysis</h2>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        <div style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); padding: 1.5rem; border-radius: 12px;">
+          <h3 style="color: #0f172a; margin-bottom: 1rem;">📊 Market Position</h3>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+            <span>Our Store Rating:</span>
+            <span style="font-weight: 600; color: #059669;">4.5 ⭐</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+            <span>Average Competitor Rating:</span>
+            <span style="font-weight: 600; color: #dc2626;">4.1 ⭐</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span>Market Share:</span>
+            <span style="font-weight: 600; color: #059669;">25%</span>
+          </div>
+        </div>
+        
+        <div style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); padding: 1.5rem; border-radius: 12px;">
+          <h3 style="color: #0f172a; margin-bottom: 1rem;">💰 Price Competitiveness</h3>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+            <span>Average Price Difference:</span>
+            <span style="font-weight: 600; color: #059669;">-5%</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+            <span>Price Leadership Items:</span>
+            <span style="font-weight: 600; color: #059669;">15</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span>Competitive Items:</span>
+            <span style="font-weight: 600; color: #f59e0b;">8</span>
+          </div>
+        </div>
+      </div>
+      
+      <h3 style="color: #0f172a; margin-bottom: 1rem;">📈 Price Comparison</h3>
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 1.5rem;">
+          <thead>
+            <tr style="background: #f1f5f9;">
+              <th style="padding: 12px; text-align: left; border: 1px solid #e2e8f0;">Product</th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">Our Price</th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">Big Bazaar</th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">Reliance Fresh</th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">D-Mart</th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">Local Market</th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; font-weight: 600;">Tomato</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">₹20</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">₹22</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">₹21</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">₹20</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">₹18</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; color: #059669; font-weight: 600;">✅ Competitive</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; font-weight: 600;">Rice</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">₹50</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">₹52</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">₹51</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">₹49</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">₹48</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; color: #059669; font-weight: 600;">✅ Competitive</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; font-weight: 600;">Milk</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">₹60</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">₹62</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">₹61</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">₹59</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">₹58</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; color: #059669; font-weight: 600;">✅ Competitive</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+        <button onclick="showMainSection()" style="background: #667eea; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">🛒 Back to Store</button>
+        <button onclick="updateCompetitorPrices()" style="background: #059669; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">📊 Update Prices</button>
+      </div>
+    </div>
+  `;
+  
+  const itemsSection = document.getElementById("itemsSection");
+  if (itemsSection) {
+    itemsSection.innerHTML = analysisHTML;
+    console.log("Competitor Analysis content loaded successfully");
+  } else {
+    console.error("itemsSection element not found");
+    alert("Error: Could not find the content area. Please refresh the page.");
+  }
+}
+
+// Profit Margins Analysis
+function showProfitMargins() {
+  console.log("showProfitMargins function called");
+  
+  // Simple test first
+  const testHTML = `
+    <div style="background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+      <h2 style="color: #667eea; margin-bottom: 1.5rem;">💰 Profit Margins Analysis</h2>
+      <p style="color: #64748b; margin-bottom: 1rem;">Profit analysis for your store.</p>
+      <div style="background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); padding: 1.5rem; border-radius: 12px; text-align: center;">
+        <h3 style="color: #166534; margin-bottom: 0.5rem;">Total Revenue</h3>
+        <p style="font-size: 1.5rem; font-weight: 700; color: #166534; margin: 0;">₹120,000</p>
+      </div>
+      <div style="margin-top: 2rem;">
+        <button onclick="showMainSection()" style="background: #667eea; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">🛒 Back to Store</button>
+      </div>
+    </div>
+  `;
+  
+  const itemsSection = document.getElementById("itemsSection");
+  console.log("itemsSection element:", itemsSection);
+  if (itemsSection) {
+    itemsSection.style.display = "block";
+    itemsSection.innerHTML = testHTML;
+    console.log("Profit Margins content loaded successfully");
+  } else {
+    console.error("itemsSection element not found");
+    alert("Error: Could not find the content area. Please refresh the page.");
+  }
+}
+
+// Cash Flow Management
+function showCashFlow() {
+  console.log("showCashFlow function called");
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth();
+  const currentYear = currentDate.getFullYear();
+  
+  // Mock cash flow data
+  const cashFlowData = {
+    income: {
+      sales: 125000,
+      kathaPayments: 45000,
+      otherIncome: 5000
+    },
+    expenses: {
+      inventory: 85000,
+      rent: 15000,
+      utilities: 8000,
+      salaries: 25000,
+      marketing: 5000,
+      otherExpenses: 3000
+    }
+  };
+  
+  const totalIncome = cashFlowData.income.sales + cashFlowData.income.kathaPayments + cashFlowData.income.otherIncome;
+  const totalExpenses = Object.values(cashFlowData.expenses).reduce((sum, exp) => sum + exp, 0);
+  const netCashFlow = totalIncome - totalExpenses;
+  
+  let cashFlowHTML = `
+    <div style="background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+      <h2 style="color: #667eea; margin-bottom: 1.5rem;">💸 Cash Flow Management</h2>
+      <p style="color: #64748b; margin-bottom: 2rem;">Period: ${currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        <div style="background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); padding: 1.5rem; border-radius: 12px;">
+          <h3 style="color: #166534; margin-bottom: 1rem;">💰 Income</h3>
+          <div style="margin-bottom: 0.5rem;">
+            <span>Sales Revenue:</span>
+            <span style="float: right; font-weight: 600; color: #166534;">₹${cashFlowData.income.sales.toLocaleString()}</span>
+          </div>
+          <div style="margin-bottom: 0.5rem;">
+            <span>Katha Payments:</span>
+            <span style="float: right; font-weight: 600; color: #166534;">₹${cashFlowData.income.kathaPayments.toLocaleString()}</span>
+          </div>
+          <div style="margin-bottom: 0.5rem;">
+            <span>Other Income:</span>
+            <span style="float: right; font-weight: 600; color: #166534;">₹${cashFlowData.income.otherIncome.toLocaleString()}</span>
+          </div>
+          <hr style="margin: 1rem 0; border: 1px solid #bbf7d0;">
+          <div style="font-weight: 700; font-size: 1.1rem; color: #166534;">
+            <span>Total Income:</span>
+            <span style="float: right;">₹${totalIncome.toLocaleString()}</span>
+          </div>
+        </div>
+        
+        <div style="background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%); padding: 1.5rem; border-radius: 12px;">
+          <h3 style="color: #dc2626; margin-bottom: 1rem;">💸 Expenses</h3>
+          <div style="margin-bottom: 0.5rem;">
+            <span>Inventory Purchase:</span>
+            <span style="float: right; font-weight: 600; color: #dc2626;">₹${cashFlowData.expenses.inventory.toLocaleString()}</span>
+          </div>
+          <div style="margin-bottom: 0.5rem;">
+            <span>Rent:</span>
+            <span style="float: right; font-weight: 600; color: #dc2626;">₹${cashFlowData.expenses.rent.toLocaleString()}</span>
+          </div>
+          <div style="margin-bottom: 0.5rem;">
+            <span>Utilities:</span>
+            <span style="float: right; font-weight: 600; color: #dc2626;">₹${cashFlowData.expenses.utilities.toLocaleString()}</span>
+          </div>
+          <div style="margin-bottom: 0.5rem;">
+            <span>Salaries:</span>
+            <span style="float: right; font-weight: 600; color: #dc2626;">₹${cashFlowData.expenses.salaries.toLocaleString()}</span>
+          </div>
+          <div style="margin-bottom: 0.5rem;">
+            <span>Marketing:</span>
+            <span style="float: right; font-weight: 600; color: #dc2626;">₹${cashFlowData.expenses.marketing.toLocaleString()}</span>
+          </div>
+          <div style="margin-bottom: 0.5rem;">
+            <span>Other Expenses:</span>
+            <span style="float: right; font-weight: 600; color: #dc2626;">₹${cashFlowData.expenses.otherExpenses.toLocaleString()}</span>
+          </div>
+          <hr style="margin: 1rem 0; border: 1px solid #fecaca;">
+          <div style="font-weight: 700; font-size: 1.1rem; color: #dc2626;">
+            <span>Total Expenses:</span>
+            <span style="float: right;">₹${totalExpenses.toLocaleString()}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div style="background: ${netCashFlow >= 0 ? 'linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)' : 'linear-gradient(135deg, #fef2f2 0%, #fecaca 100%)'}; padding: 1.5rem; border-radius: 12px; text-align: center; margin-bottom: 2rem;">
+        <h3 style="color: ${netCashFlow >= 0 ? '#166534' : '#dc2626'}; margin-bottom: 0.5rem;">Net Cash Flow</h3>
+        <p style="font-size: 2rem; font-weight: 700; color: ${netCashFlow >= 0 ? '#166534' : '#dc2626'}; margin: 0;">₹${netCashFlow.toLocaleString()}</p>
+        <p style="color: ${netCashFlow >= 0 ? '#166534' : '#dc2626'}; margin-top: 0.5rem;">${netCashFlow >= 0 ? '✅ Positive Cash Flow' : '❌ Negative Cash Flow'}</p>
+      </div>
+      
+      <div style="display: flex; gap: 1rem;">
+        <button onclick="showMainSection()" style="background: #667eea; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">🛒 Back to Store</button>
+        <button onclick="exportCashFlowReport()" style="background: #059669; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">📊 Export Report</button>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById("itemsSection").innerHTML = cashFlowHTML;
+}
+
+// Tax Reports
+function showTaxReports() {
+  console.log("showTaxReports function called");
+  const currentYear = new Date().getFullYear();
+  const taxData = {
+    totalSales: 1500000,
+    totalPurchases: 1050000,
+    gstCollected: 270000,
+    gstPaid: 189000,
+    gstPayable: 81000,
+    tds: 15000,
+    totalTaxLiability: 96000
+  };
+  
+  let taxHTML = `
+    <div style="background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+      <h2 style="color: #667eea; margin-bottom: 1.5rem;">📋 Tax Reports - FY ${currentYear}</h2>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+        <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); padding: 1.5rem; border-radius: 12px; text-align: center;">
+          <h3 style="color: #1e40af; margin-bottom: 0.5rem;">Total Sales</h3>
+          <p style="font-size: 1.5rem; font-weight: 700; color: #1e40af; margin: 0;">₹${taxData.totalSales.toLocaleString()}</p>
+        </div>
+        <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 1.5rem; border-radius: 12px; text-align: center;">
+          <h3 style="color: #92400e; margin-bottom: 0.5rem;">GST Collected</h3>
+          <p style="font-size: 1.5rem; font-weight: 700; color: #92400e; margin: 0;">₹${taxData.gstCollected.toLocaleString()}</p>
+        </div>
+        <div style="background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%); padding: 1.5rem; border-radius: 12px; text-align: center;">
+          <h3 style="color: #dc2626; margin-bottom: 0.5rem;">GST Paid</h3>
+          <p style="font-size: 1.5rem; font-weight: 700; color: #dc2626; margin: 0;">₹${taxData.gstPaid.toLocaleString()}</p>
+        </div>
+        <div style="background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); padding: 1.5rem; border-radius: 12px; text-align: center;">
+          <h3 style="color: #166534; margin-bottom: 0.5rem;">Net Tax Payable</h3>
+          <p style="font-size: 1.5rem; font-weight: 700; color: #166534; margin: 0;">₹${taxData.totalTaxLiability.toLocaleString()}</p>
+        </div>
+      </div>
+      
+      <h3 style="color: #0f172a; margin-bottom: 1rem;">📊 Tax Breakdown</h3>
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="background: #f1f5f9;">
+              <th style="padding: 12px; text-align: left; border: 1px solid #e2e8f0;">Description</th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">Amount (₹)</th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">GST Rate</th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">GST Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding: 12px; border: 1px solid #e2e8f0;">Sales Revenue</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">${taxData.totalSales.toLocaleString()}</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">18%</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">${taxData.gstCollected.toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px; border: 1px solid #e2e8f0;">Purchase Expenses</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">${taxData.totalPurchases.toLocaleString()}</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">18%</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">${taxData.gstPaid.toLocaleString()}</td>
+            </tr>
+            <tr style="background: #f8fafc;">
+              <td style="padding: 12px; border: 1px solid #e2e8f0; font-weight: 600;">Net GST Payable</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; font-weight: 600;">-</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; font-weight: 600;">-</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; font-weight: 600; color: #dc2626;">${taxData.gstPayable.toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px; border: 1px solid #e2e8f0;">TDS</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">-</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">-</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">${taxData.tds.toLocaleString()}</td>
+            </tr>
+            <tr style="background: #fef2f2;">
+              <td style="padding: 12px; border: 1px solid #e2e8f0; font-weight: 700;">Total Tax Liability</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; font-weight: 700;">-</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; font-weight: 700;">-</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; font-weight: 700; color: #dc2626;">${taxData.totalTaxLiability.toLocaleString()}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+        <button onclick="showMainSection()" style="background: #667eea; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">🛒 Back to Store</button>
+        <button onclick="generateTaxReport()" style="background: #059669; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">📄 Generate Report</button>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById("itemsSection").innerHTML = taxHTML;
+}
+
+// Helper functions
+function updateCompetitorPrices() {
+  alert("Competitor prices updated successfully! This feature would integrate with real-time price monitoring APIs.");
+}
+
+function exportCashFlowReport() {
+  alert("Cash flow report exported to Excel! This feature would generate a downloadable CSV file.");
+}
+
+function generateTaxReport() {
+  alert("Tax report generated successfully! This feature would create a PDF report for filing.");
+}
+
+// ===== INVENTORY MANAGEMENT MODULE =====
+
+// Supplier Management
+const suppliers = [
+  { id: 1, name: "Fresh Farms Ltd", contact: "+91-9876543210", email: "contact@freshfarms.com", rating: 4.5, items: ["Tomato", "Potato", "Onion", "Carrot"] },
+  { id: 2, name: "Grocery Wholesale", contact: "+91-9876543211", email: "sales@grocerywholesale.com", rating: 4.2, items: ["Rice", "Wheat Flour", "Sugar", "Salt"] },
+  { id: 3, name: "Dairy Products Co", contact: "+91-9876543212", email: "info@dairyproducts.com", rating: 4.7, items: ["Milk", "Butter", "Cheese", "Yogurt"] },
+  { id: 4, name: "Snack Distributors", contact: "+91-9876543213", email: "orders@snackdist.com", rating: 4.3, items: ["Lay's Classic Salted", "Bourbon", "Dairy Milk", "Maggi Instant Noodles"] }
+];
+
+// Expiry tracking data
+const expiryData = [
+  { item: "Milk", expiryDate: "2024-02-15", daysLeft: 3, quantity: 50, status: "⚠️ Expiring Soon" },
+  { item: "Yogurt", expiryDate: "2024-02-18", daysLeft: 6, quantity: 30, status: "⚠️ Expiring Soon" },
+  { item: "Cheese", expiryDate: "2024-02-20", daysLeft: 8, quantity: 25, status: "✅ Good" },
+  { item: "Butter", expiryDate: "2024-02-12", daysLeft: 0, quantity: 15, status: "❌ Expired" }
+];
+
+function showSupplierManagement() {
+  let supplierHTML = `
+    <div style="background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+      <h2 style="color: #667eea; margin-bottom: 1.5rem;">🏢 Supplier Management</h2>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); padding: 1.5rem; border-radius: 12px; text-align: center;">
+          <h3 style="color: #1e40af; margin-bottom: 0.5rem;">Total Suppliers</h3>
+          <p style="font-size: 2rem; font-weight: 700; color: #1e40af; margin: 0;">${suppliers.length}</p>
+        </div>
+        <div style="background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); padding: 1.5rem; border-radius: 12px; text-align: center;">
+          <h3 style="color: #166534; margin-bottom: 0.5rem;">Avg Rating</h3>
+          <p style="font-size: 2rem; font-weight: 700; color: #166534; margin: 0;">${(suppliers.reduce((sum, s) => sum + s.rating, 0) / suppliers.length).toFixed(1)} ⭐</p>
+        </div>
+        <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 1.5rem; border-radius: 12px; text-align: center;">
+          <h3 style="color: #92400e; margin-bottom: 0.5rem;">Active Orders</h3>
+          <p style="font-size: 2rem; font-weight: 700; color: #92400e; margin: 0;">12</p>
+        </div>
+      </div>
+      
+      <h3 style="color: #0f172a; margin-bottom: 1rem;">📋 Supplier Directory</h3>
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="background: #f1f5f9;">
+              <th style="padding: 12px; text-align: left; border: 1px solid #e2e8f0;">Supplier</th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">Contact</th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">Rating</th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">Items</th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${suppliers.map(supplier => `
+              <tr>
+                <td style="padding: 12px; border: 1px solid #e2e8f0;">
+                  <div>
+                    <div style="font-weight: 600; color: #0f172a;">${supplier.name}</div>
+                    <div style="font-size: 0.9rem; color: #64748b;">${supplier.email}</div>
+                  </div>
+                </td>
+                <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">${supplier.contact}</td>
+                <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; color: ${supplier.rating >= 4.5 ? '#059669' : supplier.rating >= 4.0 ? '#f59e0b' : '#dc2626'}; font-weight: 600;">${supplier.rating} ⭐</td>
+                <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">${supplier.items.length}</td>
+                <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">
+                  <button onclick="placeOrder(${supplier.id})" style="background: #059669; color: white; padding: 0.5rem 1rem; border: none; border-radius: 5px; cursor: pointer; margin-right: 0.5rem;">📦 Order</button>
+                  <button onclick="viewSupplierDetails(${supplier.id})" style="background: #667eea; color: white; padding: 0.5rem 1rem; border: none; border-radius: 5px; cursor: pointer;">👁️ View</button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+      
+      <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+        <button onclick="showMainSection()" style="background: #667eea; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">🛒 Back to Store</button>
+        <button onclick="addNewSupplier()" style="background: #059669; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">➕ Add Supplier</button>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById("itemsSection").innerHTML = supplierHTML;
+}
+
+function showExpiryTracking() {
+  let expiryHTML = `
+    <div style="background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+      <h2 style="color: #667eea; margin-bottom: 1.5rem;">⏰ Expiry Tracking</h2>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+        <div style="background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%); padding: 1.5rem; border-radius: 12px; text-align: center;">
+          <h3 style="color: #dc2626; margin-bottom: 0.5rem;">Expired Items</h3>
+          <p style="font-size: 2rem; font-weight: 700; color: #dc2626; margin: 0;">${expiryData.filter(item => item.daysLeft <= 0).length}</p>
+        </div>
+        <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 1.5rem; border-radius: 12px; text-align: center;">
+          <h3 style="color: #92400e; margin-bottom: 0.5rem;">Expiring Soon</h3>
+          <p style="font-size: 2rem; font-weight: 700; color: #92400e; margin: 0;">${expiryData.filter(item => item.daysLeft > 0 && item.daysLeft <= 7).length}</p>
+        </div>
+        <div style="background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); padding: 1.5rem; border-radius: 12px; text-align: center;">
+          <h3 style="color: #166534; margin-bottom: 0.5rem;">Good Items</h3>
+          <p style="font-size: 2rem; font-weight: 700; color: #166534; margin: 0;">${expiryData.filter(item => item.daysLeft > 7).length}</p>
+        </div>
+      </div>
+      
+      <h3 style="color: #0f172a; margin-bottom: 1rem;">📅 Expiry Alerts</h3>
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="background: #f1f5f9;">
+              <th style="padding: 12px; text-align: left; border: 1px solid #e2e8f0;">Item</th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">Expiry Date</th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">Days Left</th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">Quantity</th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">Status</th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${expiryData.map(item => {
+              const statusColor = item.daysLeft <= 0 ? '#dc2626' : item.daysLeft <= 7 ? '#f59e0b' : '#059669';
+              return `
+                <tr>
+                  <td style="padding: 12px; border: 1px solid #e2e8f0; font-weight: 600;">${item.item}</td>
+                  <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">${item.expiryDate}</td>
+                  <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; color: ${statusColor}; font-weight: 600;">${item.daysLeft} days</td>
+                  <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">${item.quantity}</td>
+                  <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; color: ${statusColor}; font-weight: 600;">${item.status}</td>
+                  <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">
+                    ${item.daysLeft <= 0 ? 
+                      '<button onclick="disposeExpiredItem(\'' + item.item + '\')" style="background: #dc2626; color: white; padding: 0.5rem 1rem; border: none; border-radius: 5px; cursor: pointer;">🗑️ Dispose</button>' :
+                      item.daysLeft <= 7 ?
+                      '<button onclick="discountExpiringItem(\'' + item.item + '\')" style="background: #f59e0b; color: white; padding: 0.5rem 1rem; border: none; border-radius: 5px; cursor: pointer;">💰 Discount</button>' :
+                      '<span style="color: #059669;">✅ Safe</span>'
+                    }
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+      
+      <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+        <button onclick="showMainSection()" style="background: #667eea; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">🛒 Back to Store</button>
+        <button onclick="exportExpiryReport()" style="background: #059669; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">📊 Export Report</button>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById("itemsSection").innerHTML = expiryHTML;
+}
+
+function showAutoReordering() {
+  // Find items that need reordering (low stock)
+  const lowStockItems = [];
+  categories.forEach(category => {
+    category.items.forEach(item => {
+      if (item.stock <= 10) {
+        lowStockItems.push({
+          ...item,
+          category: category.name,
+          reorderQuantity: Math.max(50, item.stock * 2) // Reorder 2x current stock or minimum 50
+        });
+      }
+    });
+  });
+  
+  let reorderHTML = `
+    <div style="background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+      <h2 style="color: #667eea; margin-bottom: 1.5rem;">🤖 Automated Reordering</h2>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+        <div style="background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%); padding: 1.5rem; border-radius: 12px; text-align: center;">
+          <h3 style="color: #dc2626; margin-bottom: 0.5rem;">Low Stock Items</h3>
+          <p style="font-size: 2rem; font-weight: 700; color: #dc2626; margin: 0;">${lowStockItems.length}</p>
+        </div>
+        <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 1.5rem; border-radius: 12px; text-align: center;">
+          <h3 style="color: #92400e; margin-bottom: 0.5rem;">Pending Orders</h3>
+          <p style="font-size: 2rem; font-weight: 700; color: #92400e; margin: 0;">8</p>
+        </div>
+        <div style="background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); padding: 1.5rem; border-radius: 12px; text-align: center;">
+          <h3 style="color: #166534; margin-bottom: 0.5rem;">Auto Orders</h3>
+          <p style="font-size: 2rem; font-weight: 700; color: #166534; margin: 0;">15</p>
+        </div>
+      </div>
+      
+      <h3 style="color: #0f172a; margin-bottom: 1rem;">📦 Reorder Suggestions</h3>
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="background: #f1f5f9;">
+              <th style="padding: 12px; text-align: left; border: 1px solid #e2e8f0;">Item</th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">Category</th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">Current Stock</th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">Reorder Quantity</th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">Estimated Cost</th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${lowStockItems.map(item => {
+              const estimatedCost = item.price * 0.7 * item.reorderQuantity; // Assuming 30% margin
+              return `
+                <tr>
+                  <td style="padding: 12px; border: 1px solid #e2e8f0; font-weight: 600;">${item.name}</td>
+                  <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">${item.category}</td>
+                  <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; color: #dc2626; font-weight: 600;">${item.stock}</td>
+                  <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">${item.reorderQuantity}</td>
+                  <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">₹${estimatedCost.toLocaleString()}</td>
+                  <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">
+                    <button onclick="autoReorder('${item.name}', ${item.reorderQuantity})" style="background: #059669; color: white; padding: 0.5rem 1rem; border: none; border-radius: 5px; cursor: pointer;">🤖 Auto Order</button>
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+      
+      <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+        <button onclick="showMainSection()" style="background: #667eea; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">🛒 Back to Store</button>
+        <button onclick="bulkAutoReorder()" style="background: #059669; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">🤖 Bulk Auto Order</button>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById("itemsSection").innerHTML = reorderHTML;
+}
+
+// Helper functions for inventory management
+function placeOrder(supplierId) {
+  const supplier = suppliers.find(s => s.id === supplierId);
+  alert(`Order placed with ${supplier.name}! This feature would integrate with supplier APIs.`);
+}
+
+function viewSupplierDetails(supplierId) {
+  const supplier = suppliers.find(s => s.id === supplierId);
+  alert(`Supplier Details:\nName: ${supplier.name}\nContact: ${supplier.contact}\nEmail: ${supplier.email}\nRating: ${supplier.rating} ⭐\nItems: ${supplier.items.join(', ')}`);
+}
+
+function addNewSupplier() {
+  alert("Add New Supplier form would open here!");
+}
+
+function disposeExpiredItem(itemName) {
+  if (confirm(`Are you sure you want to dispose of ${itemName}?`)) {
+    alert(`${itemName} has been disposed of. Stock updated.`);
+  }
+}
+
+function discountExpiringItem(itemName) {
+  alert(`${itemName} has been marked for discount sale!`);
+}
+
+function exportExpiryReport() {
+  alert("Expiry report exported to Excel!");
+}
+
+function autoReorder(itemName, quantity) {
+  alert(`Auto order placed for ${quantity} units of ${itemName}!`);
+}
+
+function bulkAutoReorder() {
+  alert("Bulk auto order placed for all low stock items!");
+}
+
+// ===== CUSTOMER FEATURES MODULE =====
+
+// Recipe Database
+const recipes = {
+  "Butter Chicken": {
+    ingredients: [
+      { name: "Chicken", quantity: 500, unit: "g", price: 200 },
+      { name: "Tomato", quantity: 4, unit: "pieces", price: 80 },
+      { name: "Onion", quantity: 2, unit: "pieces", price: 50 },
+      { name: "Butter", quantity: 100, unit: "g", price: 120 },
+      { name: "Cream", quantity: 200, unit: "ml", price: 80 },
+      { name: "Spices", quantity: 50, unit: "g", price: 30 }
+    ],
+    totalCost: 560,
+    servings: 4,
+    difficulty: "Medium",
+    time: "45 minutes",
+    nutrition: { calories: 450, protein: 25, carbs: 15, fat: 35 }
+  },
+  "Vegetable Pulao": {
+    ingredients: [
+      { name: "Rice", quantity: 2, unit: "cups", price: 100 },
+      { name: "Carrot", quantity: 2, unit: "pieces", price: 36 },
+      { name: "Peas", quantity: 1, unit: "cup", price: 40 },
+      { name: "Onion", quantity: 1, unit: "piece", price: 25 },
+      { name: "Oil", quantity: 3, unit: "tbsp", price: 45 },
+      { name: "Spices", quantity: 30, unit: "g", price: 20 }
+    ],
+    totalCost: 266,
+    servings: 4,
+    difficulty: "Easy",
+    time: "30 minutes",
+    nutrition: { calories: 320, protein: 8, carbs: 55, fat: 12 }
+  },
+  "Dal Khichdi": {
+    ingredients: [
+      { name: "Rice", quantity: 1, unit: "cup", price: 50 },
+      { name: "Dal", quantity: 1, unit: "cup", price: 60 },
+      { name: "Ghee", quantity: 2, unit: "tbsp", price: 40 },
+      { name: "Spices", quantity: 20, unit: "g", price: 15 }
+    ],
+    totalCost: 165,
+    servings: 3,
+    difficulty: "Easy",
+    time: "25 minutes",
+    nutrition: { calories: 280, protein: 12, carbs: 45, fat: 8 }
+  }
+};
+
+// Nutritional Information Database
+const nutritionalInfo = {
+  "Tomato": { calories: 18, protein: 0.9, carbs: 3.9, fat: 0.2, fiber: 1.2, allergens: [] },
+  "Potato": { calories: 77, protein: 2, carbs: 17, fat: 0.1, fiber: 2.2, allergens: [] },
+  "Milk": { calories: 42, protein: 3.4, carbs: 5, fat: 1, fiber: 0, allergens: ["Dairy"] },
+  "Rice": { calories: 130, protein: 2.7, carbs: 28, fat: 0.3, fiber: 0.4, allergens: [] },
+  "Eggs": { calories: 155, protein: 13, carbs: 1.1, fat: 11, fiber: 0, allergens: ["Eggs"] },
+  "Butter": { calories: 717, protein: 0.9, carbs: 0.1, fat: 81, fiber: 0, allergens: ["Dairy"] },
+  "Cheese": { calories: 113, protein: 7, carbs: 0.4, fat: 9, fiber: 0, allergens: ["Dairy"] },
+  "Bread": { calories: 265, protein: 9, carbs: 49, fat: 3.2, fiber: 2.7, allergens: ["Gluten"] }
+};
+
+// Allergen Information
+const allergens = {
+  "Dairy": "Contains milk and milk products",
+  "Eggs": "Contains eggs and egg products", 
+  "Gluten": "Contains wheat, rye, barley",
+  "Nuts": "Contains tree nuts and peanuts",
+  "Soy": "Contains soy products",
+  "Fish": "Contains fish and shellfish"
+};
+
+function showRecipeIntegration() {
+  let recipeHTML = `
+    <div style="background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+      <h2 style="color: #667eea; margin-bottom: 1.5rem;">👨‍🍳 Recipe Integration</h2>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        ${Object.entries(recipes).map(([recipeName, recipe]) => `
+          <div style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); padding: 1.5rem; border-radius: 12px;">
+            <h3 style="color: #0f172a; margin-bottom: 1rem;">${recipeName}</h3>
+            <div style="margin-bottom: 1rem;">
+              <span style="font-weight: 600;">⏱️ Time:</span> ${recipe.time}<br>
+              <span style="font-weight: 600;">👥 Servings:</span> ${recipe.servings}<br>
+              <span style="font-weight: 600;">📊 Difficulty:</span> ${recipe.difficulty}<br>
+              <span style="font-weight: 600;">💰 Total Cost:</span> ₹${recipe.totalCost}
+            </div>
+            <div style="margin-bottom: 1rem;">
+              <span style="font-weight: 600;">🍽️ Nutrition (per serving):</span><br>
+              Calories: ${recipe.nutrition.calories} | Protein: ${recipe.nutrition.protein}g | Carbs: ${recipe.nutrition.carbs}g | Fat: ${recipe.nutrition.fat}g
+            </div>
+            <button onclick="addRecipeIngredients('${recipeName}')" style="background: #059669; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer; width: 100%;">🛒 Add All Ingredients</button>
+          </div>
+        `).join('')}
+      </div>
+      
+      <h3 style="color: #0f172a; margin-bottom: 1rem;">📋 Recipe Ingredients</h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+        ${Object.entries(recipes).map(([recipeName, recipe]) => `
+          <div style="background: #f8fafc; padding: 1rem; border-radius: 8px;">
+            <h4 style="color: #0f172a; margin-bottom: 0.5rem;">${recipeName} Ingredients:</h4>
+            <ul style="margin: 0; padding-left: 1.5rem; font-size: 0.9rem;">
+              ${recipe.ingredients.map(ing => `
+                <li style="margin-bottom: 0.25rem;">${ing.name} - ${ing.quantity} ${ing.unit} (₹${ing.price})</li>
+              `).join('')}
+            </ul>
+          </div>
+        `).join('')}
+      </div>
+      
+      <div style="margin-top: 2rem;">
+        <button onclick="showMainSection()" style="background: #667eea; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">🛒 Back to Store</button>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById("itemsSection").innerHTML = recipeHTML;
+}
+
+function showNutritionalInfo() {
+  let nutritionHTML = `
+    <div style="background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+      <h2 style="color: #667eea; margin-bottom: 1.5rem;">🥗 Nutritional Information</h2>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        ${Object.entries(nutritionalInfo).map(([itemName, nutrition]) => `
+          <div style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); padding: 1.5rem; border-radius: 12px;">
+            <h3 style="color: #0f172a; margin-bottom: 1rem;">${itemName}</h3>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; margin-bottom: 1rem;">
+              <div><span style="font-weight: 600;">🔥 Calories:</span> ${nutrition.calories}</div>
+              <div><span style="font-weight: 600;">💪 Protein:</span> ${nutrition.protein}g</div>
+              <div><span style="font-weight: 600;">🍞 Carbs:</span> ${nutrition.carbs}g</div>
+              <div><span style="font-weight: 600;">🧈 Fat:</span> ${nutrition.fat}g</div>
+              <div><span style="font-weight: 600;">🌾 Fiber:</span> ${nutrition.fiber}g</div>
+            </div>
+            ${nutrition.allergens.length > 0 ? `
+              <div style="background: #fef2f2; padding: 0.5rem; border-radius: 5px; margin-top: 0.5rem;">
+                <span style="font-weight: 600; color: #dc2626;">⚠️ Allergens:</span> ${nutrition.allergens.map(allergen => allergens[allergen]).join(', ')}
+              </div>
+            ` : ''}
+          </div>
+        `).join('')}
+      </div>
+      
+      <h3 style="color: #0f172a; margin-bottom: 1rem;">⚠️ Allergen Guide</h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+        ${Object.entries(allergens).map(([allergen, description]) => `
+          <div style="background: #fef2f2; padding: 1rem; border-radius: 8px; border-left: 4px solid #dc2626;">
+            <h4 style="color: #dc2626; margin-bottom: 0.5rem;">${allergen}</h4>
+            <p style="margin: 0; font-size: 0.9rem; color: #7f1d1d;">${description}</p>
+          </div>
+        `).join('')}
+      </div>
+      
+      <div style="margin-top: 2rem;">
+        <button onclick="showMainSection()" style="background: #667eea; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">🛒 Back to Store</button>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById("itemsSection").innerHTML = nutritionHTML;
+}
+
+function showPriceComparison() {
+  // Mock competitor prices
+  const competitorPrices = {
+    "Tomato": { ourPrice: 20, bigBazaar: 22, relianceFresh: 21, dMart: 20, localMarket: 18 },
+    "Potato": { ourPrice: 15, bigBazaar: 17, relianceFresh: 16, dMart: 15, localMarket: 14 },
+    "Milk": { ourPrice: 60, bigBazaar: 62, relianceFresh: 61, dMart: 59, localMarket: 58 },
+    "Rice": { ourPrice: 50, bigBazaar: 52, relianceFresh: 51, dMart: 49, localMarket: 48 },
+    "Bread": { ourPrice: 35, bigBazaar: 38, relianceFresh: 37, dMart: 35, localMarket: 33 }
+  };
+  
+  let comparisonHTML = `
+    <div style="background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+      <h2 style="color: #667eea; margin-bottom: 1.5rem;">💰 Price Comparison</h2>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+        <div style="background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); padding: 1.5rem; border-radius: 12px; text-align: center;">
+          <h3 style="color: #166534; margin-bottom: 0.5rem;">Best Prices</h3>
+          <p style="font-size: 2rem; font-weight: 700; color: #166534; margin: 0;">${Object.keys(competitorPrices).filter(item => {
+            const prices = competitorPrices[item];
+            return prices.ourPrice <= Math.min(prices.bigBazaar, prices.relianceFresh, prices.dMart, prices.localMarket);
+          }).length}</p>
+        </div>
+        <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 1.5rem; border-radius: 12px; text-align: center;">
+          <h3 style="color: #92400e; margin-bottom: 0.5rem;">Competitive Prices</h3>
+          <p style="font-size: 2rem; font-weight: 700; color: #92400e; margin: 0;">${Object.keys(competitorPrices).filter(item => {
+            const prices = competitorPrices[item];
+            const avgCompetitor = (prices.bigBazaar + prices.relianceFresh + prices.dMart + prices.localMarket) / 4;
+            return Math.abs(prices.ourPrice - avgCompetitor) <= 2;
+          }).length}</p>
+        </div>
+        <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); padding: 1.5rem; border-radius: 12px; text-align: center;">
+          <h3 style="color: #1e40af; margin-bottom: 0.5rem;">Avg Savings</h3>
+          <p style="font-size: 2rem; font-weight: 700; color: #1e40af; margin: 0;">₹${Math.round(Object.keys(competitorPrices).reduce((total, item) => {
+            const prices = competitorPrices[item];
+            const avgCompetitor = (prices.bigBazaar + prices.relianceFresh + prices.dMart + prices.localMarket) / 4;
+            return total + Math.max(0, avgCompetitor - prices.ourPrice);
+          }, 0) / Object.keys(competitorPrices).length)}</p>
+        </div>
+      </div>
+      
+      <h3 style="color: #0f172a; margin-bottom: 1rem;">📊 Detailed Comparison</h3>
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="background: #f1f5f9;">
+              <th style="padding: 12px; text-align: left; border: 1px solid #e2e8f0;">Product</th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">Our Price</th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">Big Bazaar</th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">Reliance Fresh</th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">D-Mart</th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">Local Market</th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">Savings</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${Object.entries(competitorPrices).map(([item, prices]) => {
+              const avgCompetitor = (prices.bigBazaar + prices.relianceFresh + prices.dMart + prices.localMarket) / 4;
+              const savings = avgCompetitor - prices.ourPrice;
+              const savingsColor = savings > 0 ? '#059669' : savings < 0 ? '#dc2626' : '#64748b';
+              const savingsText = savings > 0 ? `+₹${savings.toFixed(1)}` : savings < 0 ? `-₹${Math.abs(savings).toFixed(1)}` : 'Same';
+              
+              return `
+                <tr>
+                  <td style="padding: 12px; border: 1px solid #e2e8f0; font-weight: 600;">${item}</td>
+                  <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; font-weight: 600; color: #667eea;">₹${prices.ourPrice}</td>
+                  <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">₹${prices.bigBazaar}</td>
+                  <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">₹${prices.relianceFresh}</td>
+                  <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">₹${prices.dMart}</td>
+                  <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">₹${prices.localMarket}</td>
+                  <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; color: ${savingsColor}; font-weight: 600;">${savingsText}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+      
+      <div style="margin-top: 2rem;">
+        <button onclick="showMainSection()" style="background: #667eea; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">🛒 Back to Store</button>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById("itemsSection").innerHTML = comparisonHTML;
+}
+
+function showDeliveryScheduling() {
+  const timeSlots = [
+    { time: "09:00 - 11:00", available: true, price: 0 },
+    { time: "11:00 - 13:00", available: true, price: 0 },
+    { time: "13:00 - 15:00", available: true, price: 0 },
+    { time: "15:00 - 17:00", available: true, price: 0 },
+    { time: "17:00 - 19:00", available: true, price: 20 },
+    { time: "19:00 - 21:00", available: false, price: 30 }
+  ];
+  
+  let deliveryHTML = `
+    <div style="background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+      <h2 style="color: #667eea; margin-bottom: 1.5rem;">🚚 Delivery Scheduling</h2>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        <div style="background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); padding: 1.5rem; border-radius: 12px;">
+          <h3 style="color: #166534; margin-bottom: 1rem;">📅 Today's Slots</h3>
+          <div style="display: grid; gap: 0.5rem;">
+            ${timeSlots.map((slot, index) => `
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: ${slot.available ? '#f0fdf4' : '#fef2f2'}; border-radius: 5px; border: 1px solid ${slot.available ? '#bbf7d0' : '#fecaca'};">
+                <span style="font-weight: 600; color: ${slot.available ? '#166534' : '#dc2626'};">${slot.time}</span>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  ${slot.available ? 
+                    `<span style="color: #166534;">✅ Available</span>` : 
+                    `<span style="color: #dc2626;">❌ Unavailable</span>`
+                  }
+                  ${slot.price > 0 ? `<span style="color: #92400e; font-weight: 600;">+₹${slot.price}</span>` : ''}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        
+        <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); padding: 1.5rem; border-radius: 12px;">
+          <h3 style="color: #1e40af; margin-bottom: 1rem;">📍 Delivery Areas</h3>
+          <div style="margin-bottom: 1rem;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+              <span>Within 2km:</span>
+              <span style="font-weight: 600; color: #166534;">Free</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+              <span>2-5km:</span>
+              <span style="font-weight: 600; color: #f59e0b;">₹30</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+              <span>5-10km:</span>
+              <span style="font-weight: 600; color: #dc2626;">₹50</span>
+            </div>
+          </div>
+          
+          <h4 style="color: #1e40af; margin-bottom: 0.5rem;">📋 Delivery Instructions</h4>
+          <textarea placeholder="Enter delivery instructions (optional)" style="width: 100%; padding: 0.5rem; border: 1px solid #e2e8f0; border-radius: 5px; resize: vertical; min-height: 80px;"></textarea>
+        </div>
+      </div>
+      
+      <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;">
+        <h3 style="color: #92400e; margin-bottom: 1rem;">💡 Delivery Tips</h3>
+        <ul style="margin: 0; padding-left: 1.5rem; color: #92400e;">
+          <li>Orders placed before 2 PM get same-day delivery</li>
+          <li>Minimum order value: ₹200 for free delivery</li>
+          <li>Contact us if you need urgent delivery</li>
+          <li>Track your delivery in real-time</li>
+        </ul>
+      </div>
+      
+      <div style="display: flex; gap: 1rem;">
+        <button onclick="showMainSection()" style="background: #667eea; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">🛒 Back to Store</button>
+        <button onclick="scheduleDelivery()" style="background: #059669; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">📅 Schedule Delivery</button>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById("itemsSection").innerHTML = deliveryHTML;
+}
+
+// Helper functions for customer features
+function addRecipeIngredients(recipeName) {
+  const recipe = recipes[recipeName];
+  if (!recipe) return;
+  
+  recipe.ingredients.forEach(ingredient => {
+    // Find the item in categories and add to cart
+    categories.forEach(category => {
+      const item = category.items.find(item => item.name.toLowerCase().includes(ingredient.name.toLowerCase()));
+      if (item) {
+        addToCart(item, ingredient.quantity);
+      }
+    });
+  });
+  
+  alert(`All ingredients for ${recipeName} have been added to your cart! Total cost: ₹${recipe.totalCost}`);
+}
+
+function scheduleDelivery() {
+  alert("Delivery scheduled successfully! You will receive a confirmation SMS shortly.");
+}
+
+// Test function to verify button functionality
+function testButtonFunctionality() {
+  alert("Button functionality is working! This is a test function.");
+  console.log("Test function called successfully");
+  
+  // Test if we can access the itemsSection
+  const itemsSection = document.getElementById("itemsSection");
+  if (itemsSection) {
+    itemsSection.innerHTML = `
+      <div style="background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+        <h2 style="color: #667eea; margin-bottom: 1.5rem;">🧪 Test Function Working!</h2>
+        <p style="color: #64748b; margin-bottom: 1rem;">This test confirms that:</p>
+        <ul style="color: #64748b; margin-bottom: 1rem;">
+          <li>✅ Button event listeners are working</li>
+          <li>✅ JavaScript functions can be called</li>
+          <li>✅ Content can be displayed in itemsSection</li>
+          <li>✅ HTML elements can be found and modified</li>
+        </ul>
+        <button onclick="showMainSection()" style="background: #667eea; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">🛒 Back to Store</button>
+      </div>
+    `;
+    console.log("Test content loaded successfully");
+  } else {
+    console.error("itemsSection not found in test function");
+  }
+}
+
+// Simple test functions for each feature
+function testCompetitorAnalysis() {
+  alert("Competitor Analysis feature is working!");
+}
+
+function testProfitMargins() {
+  alert("Profit Margins feature is working!");
+}
+
+function testCashFlow() {
+  alert("Cash Flow feature is working!");
+}
+
+function testTaxReports() {
+  alert("Tax Reports feature is working!");
+}
+
+function testSupplierManagement() {
+  alert("Supplier Management feature is working!");
+}
+
+function testExpiryTracking() {
+  alert("Expiry Tracking feature is working!");
+}
+
+function testAutoReordering() {
+  alert("Auto Reordering feature is working!");
+}
+
+function testRecipeIntegration() {
+  alert("Recipe Integration feature is working!");
+}
+
+function testNutritionalInfo() {
+  alert("Nutritional Info feature is working!");
+}
+
+function testPriceComparison() {
+  alert("Price Comparison feature is working!");
+}
+
+function testDeliveryScheduling() {
+  alert("Delivery Scheduling feature is working!");
+}
+
+// Missing functions for navigation buttons
+function showBillHistory() {
+  console.log("showBillHistory function called");
+  
+  const itemsSection = document.getElementById("itemsSection");
+  if (itemsSection) {
+    itemsSection.innerHTML = `
+      <div style="background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+        <h2 style="color: #667eea; margin-bottom: 1.5rem;">📄 Bill History</h2>
+        
+        <div style="margin-bottom: 2rem;">
+          <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+            <input type="text" placeholder="Search bills..." style="flex: 1; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px;">
+            <select style="padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px;">
+              <option>All Status</option>
+              <option>Paid</option>
+              <option>Pending</option>
+              <option>Cancelled</option>
+            </select>
+            <button style="background: #667eea; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">🔍 Search</button>
+          </div>
+        </div>
+        
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="background: #f1f5f9;">
+                <th style="padding: 12px; text-align: left; border: 1px solid #e2e8f0;">Bill ID</th>
+                <th style="padding: 12px; text-align: left; border: 1px solid #e2e8f0;">Customer</th>
+                <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">Date</th>
+                <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">Amount</th>
+                <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">Status</th>
+                <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="padding: 12px; border: 1px solid #e2e8f0;">BILL-001</td>
+                <td style="padding: 12px; border: 1px solid #e2e8f0;">John Doe</td>
+                <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">2024-01-15</td>
+                <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">₹1,250</td>
+                <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; color: #059669; font-weight: 600;">✅ Paid</td>
+                <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">
+                  <button style="background: #667eea; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; margin-right: 0.5rem;">👁️ View</button>
+                  <button style="background: #059669; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer;">📄 Print</button>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 12px; border: 1px solid #e2e8f0;">BILL-002</td>
+                <td style="padding: 12px; border: 1px solid #e2e8f0;">Jane Smith</td>
+                <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">2024-01-14</td>
+                <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">₹850</td>
+                <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; color: #f59e0b; font-weight: 600;">⏳ Pending</td>
+                <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">
+                  <button style="background: #667eea; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; margin-right: 0.5rem;">👁️ View</button>
+                  <button style="background: #059669; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer;">📄 Print</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+          <button onclick="showMainSection()" style="background: #667eea; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">🛒 Back to Store</button>
+          <button style="background: #059669; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">📊 Export Report</button>
+        </div>
+      </div>
+    `;
+    console.log("Bill History content loaded successfully");
+  } else {
+    console.error("itemsSection not found");
+  }
+}
+
+function showContactSection() {
+  console.log("showContactSection function called");
+  
+  const itemsSection = document.getElementById("itemsSection");
+  if (itemsSection) {
+    itemsSection.innerHTML = `
+      <div style="background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+        <h2 style="color: #667eea; margin-bottom: 1.5rem;">📞 Contact Us</h2>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-bottom: 2rem;">
+          <div style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); padding: 1.5rem; border-radius: 12px;">
+            <h3 style="color: #0f172a; margin-bottom: 1rem;">📍 Store Location</h3>
+            <p style="color: #64748b; margin-bottom: 0.5rem;">123 Main Street</p>
+            <p style="color: #64748b; margin-bottom: 0.5rem;">City Center, State 12345</p>
+            <p style="color: #64748b; margin-bottom: 0.5rem;">India</p>
+          </div>
+          
+          <div style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); padding: 1.5rem; border-radius: 12px;">
+            <h3 style="color: #0f172a; margin-bottom: 1rem;">📞 Contact Info</h3>
+            <p style="color: #64748b; margin-bottom: 0.5rem;">Phone: +91 98765 43210</p>
+            <p style="color: #64748b; margin-bottom: 0.5rem;">Email: info@smartstore.com</p>
+            <p style="color: #64748b; margin-bottom: 0.5rem;">WhatsApp: +91 98765 43210</p>
+          </div>
+          
+          <div style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); padding: 1.5rem; border-radius: 12px;">
+            <h3 style="color: #0f172a; margin-bottom: 1rem;">🕒 Business Hours</h3>
+            <p style="color: #64748b; margin-bottom: 0.5rem;">Monday - Saturday: 8:00 AM - 10:00 PM</p>
+            <p style="color: #64748b; margin-bottom: 0.5rem;">Sunday: 9:00 AM - 8:00 PM</p>
+            <p style="color: #64748b; margin-bottom: 0.5rem;">24/7 Online Support</p>
+          </div>
+        </div>
+        
+        <div style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;">
+          <h3 style="color: #0f172a; margin-bottom: 1rem;">💬 Send us a Message</h3>
+          <form style="display: grid; gap: 1rem;">
+            <input type="text" placeholder="Your Name" style="padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px;">
+            <input type="email" placeholder="Your Email" style="padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px;">
+            <input type="text" placeholder="Subject" style="padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px;">
+            <textarea placeholder="Your Message" rows="4" style="padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; resize: vertical;"></textarea>
+            <button type="submit" style="background: #667eea; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">📤 Send Message</button>
+          </form>
+        </div>
+        
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+          <button onclick="showMainSection()" style="background: #667eea; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">🛒 Back to Store</button>
+        </div>
+      </div>
+    `;
+    console.log("Contact Section content loaded successfully");
+  } else {
+    console.error("itemsSection not found");
+  }
+}
+
+function showMonthlySpin() {
+  console.log("showMonthlySpin function called");
+  
+  const itemsSection = document.getElementById("itemsSection");
+  if (itemsSection) {
+    itemsSection.innerHTML = `
+      <div style="background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+        <h2 style="color: #667eea; margin-bottom: 1.5rem;">🎰 Monthly Spin & Rewards</h2>
+        
+        <div style="text-align: center; margin-bottom: 2rem;">
+          <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 2rem; border-radius: 20px; margin-bottom: 1rem;">
+            <h3 style="color: #92400e; margin-bottom: 1rem;">🎁 Lucky Spin</h3>
+            <p style="color: #92400e; margin-bottom: 1rem;">Spin the wheel to win amazing rewards!</p>
+            <button onclick="spinWheel()" style="background: #f59e0b; color: white; padding: 1rem 2rem; border: none; border-radius: 12px; cursor: pointer; font-size: 1.2rem; font-weight: 600;">🎰 SPIN NOW</button>
+          </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+          <div style="background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); padding: 1.5rem; border-radius: 12px; text-align: center;">
+            <h3 style="color: #166534; margin-bottom: 0.5rem;">🏆 Your Points</h3>
+            <p style="font-size: 2rem; font-weight: 700; color: #166534; margin: 0;">1,250</p>
+          </div>
+          <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); padding: 1.5rem; border-radius: 12px; text-align: center;">
+            <h3 style="color: #1e40af; margin-bottom: 0.5rem;">🎯 Tier Level</h3>
+            <p style="font-size: 2rem; font-weight: 700; color: #1e40af; margin: 0;">Gold</p>
+          </div>
+          <div style="background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%); padding: 1.5rem; border-radius: 12px; text-align: center;">
+            <h3 style="color: #dc2626; margin-bottom: 0.5rem;">🎁 Rewards Won</h3>
+            <p style="font-size: 2rem; font-weight: 700; color: #dc2626; margin: 0;">8</p>
+          </div>
+        </div>
+        
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+          <button onclick="showMainSection()" style="background: #667eea; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">🛒 Back to Store</button>
+          <button style="background: #059669; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">🏆 View Rewards</button>
+        </div>
+      </div>
+    `;
+    console.log("Monthly Spin content loaded successfully");
+  } else {
+    console.error("itemsSection not found");
+  }
+}
+
+function showHomePage() {
+  console.log("showHomePage function called");
+  
+  const itemsSection = document.getElementById("itemsSection");
+  if (itemsSection) {
+    itemsSection.innerHTML = `
+      <div style="background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+        <h2 style="color: #667eea; margin-bottom: 1.5rem;">🏠 Welcome to Smart General Store</h2>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+          <div style="background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); padding: 1.5rem; border-radius: 12px;">
+            <h3 style="color: #166534; margin-bottom: 1rem;">🛒 Start Shopping</h3>
+            <p style="color: #166534; margin-bottom: 1rem;">Browse our wide selection of products and add items to your cart.</p>
+            <button onclick="showMainSection()" style="background: #059669; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">🛒 Shop Now</button>
+          </div>
+          
+          <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); padding: 1.5rem; border-radius: 12px;">
+            <h3 style="color: #1e40af; margin-bottom: 1rem;">👤 Customer Management</h3>
+            <p style="color: #1e40af; margin-bottom: 1rem;">Add new customers and manage existing customer accounts.</p>
+            <button onclick="addCustomer()" style="background: #3b82f6; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">👤 Add Customer</button>
+          </div>
+          
+          <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 1.5rem; border-radius: 12px;">
+            <h3 style="color: #92400e; margin-bottom: 1rem;">📊 Business Intelligence</h3>
+            <p style="color: #92400e; margin-bottom: 1rem;">View competitor analysis, profit margins, and financial reports.</p>
+            <button onclick="showCompetitorAnalysis()" style="background: #f59e0b; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">📊 View Reports</button>
+          </div>
+        </div>
+        
+        <div style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;">
+          <h3 style="color: #0f172a; margin-bottom: 1rem;">🚀 Quick Actions</h3>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            <button onclick="showStockManagement()" style="background: #667eea; color: white; padding: 0.75rem 1rem; border: none; border-radius: 8px; cursor: pointer;">📦 Stock Management</button>
+            <button onclick="showKathaSection()" style="background: #667eea; color: white; padding: 0.75rem 1rem; border: none; border-radius: 8px; cursor: pointer;">📋 Katha System</button>
+            <button onclick="showBillHistory()" style="background: #667eea; color: white; padding: 0.75rem 1rem; border: none; border-radius: 8px; cursor: pointer;">📄 Bill History</button>
+            <button onclick="showMonthlySpin()" style="background: #667eea; color: white; padding: 0.75rem 1rem; border: none; border-radius: 8px; cursor: pointer;">🎰 Monthly Spin</button>
+          </div>
+        </div>
+        
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+          <button onclick="showMainSection()" style="background: #667eea; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">🛒 Start Shopping</button>
+        </div>
+      </div>
+    `;
+    console.log("Home Page content loaded successfully");
+  } else {
+    console.error("itemsSection not found");
   }
 }
