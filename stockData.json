@@ -1,0 +1,42 @@
+{
+  "Tomato": {
+    "quantity": 50,
+    "category": "Vegetables",
+    "lastUpdated": "2025-07-31T16:52:36.895Z"
+  },
+  "Potato": {
+    "quantity": 100,
+    "category": "Vegetables",
+    "lastUpdated": "2025-07-31T16:52:36.896Z"
+  },
+  "Rice": {
+    "quantity": 200,
+    "category": "Groceries",
+    "lastUpdated": "2025-07-31T16:52:36.896Z"
+  },
+  "Milk": {
+    "quantity": 100,
+    "category": "Dairy & Eggs",
+    "lastUpdated": "2025-07-31T16:52:36.896Z"
+  },
+  "Sugar": {
+    "quantity": 80,
+    "category": "Groceries",
+    "lastUpdated": "2025-07-31T16:52:36.896Z"
+  },
+  "Onion": {
+    "quantity": 75,
+    "category": "Vegetables",
+    "lastUpdated": "2025-07-31T16:52:36.896Z"
+  },
+  "Wheat Flour": {
+    "quantity": 150,
+    "category": "Groceries",
+    "lastUpdated": "2025-07-31T16:52:36.896Z"
+  },
+  "Eggs": {
+    "quantity": 50,
+    "category": "Dairy & Eggs",
+    "lastUpdated": "2025-07-31T16:52:36.896Z"
+  }
+}

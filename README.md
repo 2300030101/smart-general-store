@@ -1,167 +1,212 @@
-# 🏪 Smart General Store
+# Smart General Store with Backend Stock Management
 
-A complete Point of Sale (POS) system designed for Indian general stores with modern features and realistic product images.
+A comprehensive grocery store management system with persistent backend storage for stock management.
 
-## 🌟 Features
+## 🚀 Features
 
-### 🛒 **Shopping Experience**
-- **30+ Vegetables** with realistic images
-- **Multiple Categories**: Vegetables, Groceries, Pooja Items, Stationery
-- **Shopping Cart** with quantity management
-- **Bill Generation** and printing
-- **Responsive Design** for mobile and desktop
+### Frontend Features
+- **Customer Management**: Add and manage customers with credit limits
+- **Shopping Cart**: Add items, calculate totals, and generate bills
+- **Katha System**: Credit-based shopping with payment tracking
+- **Bill History**: View and manage past transactions
+- **Profit Analysis**: Comprehensive profit margin calculations
+- **Stock Management**: Real-time inventory tracking with backend persistence
 
-### 👥 **Customer Management**
-- **Customer Registration** with credit limits
-- **Katha System** (Traditional Indian credit system)
-- **Debt Tracking** and payment management
-- **Customer History** and records
+### Backend Features
+- **RESTful API**: Complete CRUD operations for stock management
+- **Persistent Storage**: JSON file-based data storage
+- **Real-time Updates**: Instant stock level updates
+- **Statistics**: Stock analytics and reporting
+- **Error Handling**: Robust error management
 
-### 📊 **Business Management**
-- **Stock Management** with low stock alerts
-- **Inventory Tracking** in real-time
-- **Sales Reports** and analytics
-- **Professional UI** with animations
+## 🛠️ Setup Instructions
 
-### 🔐 **Security**
-- **Admin Login** system
-- **Data Persistence** using localStorage
-- **Secure Transactions**
+### Prerequisites
+- Node.js (v14 or higher)
+- npm (comes with Node.js)
 
-## 🚀 Quick Start
+### Installation
 
-### **Local Development**
-```bash
-# Clone the repository
-git clone https://github.com/2300030101/smart-general-store.git
+1. **Install Dependencies**
+   ```bash
+   npm install
+   ```
 
-# Navigate to project directory
-cd smart-general-store
+2. **Start the Backend Server**
+   ```bash
+   npm start
+   ```
+   Or for development with auto-restart:
+   ```bash
+   npm run dev
+   ```
 
-# Start local server
-npx http-server -p 8000 --cors
+3. **Access the Application**
+   - Backend API: http://localhost:3000
+   - Frontend: http://localhost:3000/index.html
 
-# Open in browser
-http://localhost:8000
+## 📊 API Endpoints
+
+### Stock Management
+
+#### Get All Stock Data
+```http
+GET /api/stock
 ```
-
-### **Login Credentials**
-- **Username**: `admin`
-- **Password**: `1234`
-
-## 🛠️ Technology Stack
-
-- **Frontend**: HTML5, CSS3, JavaScript (ES6+)
-- **Styling**: Custom CSS with responsive design
-- **Images**: Unsplash API for realistic product images
-- **Storage**: Browser localStorage for data persistence
-- **Deployment**: GitHub Pages / Netlify
-
-## 📱 Features Overview
-
-### **Product Categories**
-- **🥬 Vegetables** (30 items): Tomato, Potato, Onion, Carrot, Cabbage, Beans, Cauliflower, Capsicum, Brinjal, Sweet Corn, Cucumber, Sweet Potato, Mushroom, Red Bell Pepper, Green Chili, Bottle Gourd, Ridge Gourd, Spinach, Fenugreek Leaves, Coriander Leaves, Drumstick, Tinda, Pumpkin, Turnip, Radish, Bitter Gourd, Snake Gourd, Spring Onion, Cluster Beans, Ivy Gourd
-- **🛒 Groceries** (6 items): Rice, Wheat Flour, Sugar, Salt, Oil, Dal
-- **🕉️ Pooja Items** (5 items): Agarbatti, Camphor, Kumkum, Oil Lamp, Flowers
-- **📚 Stationery** (5 items): Notebook, Pen, Pencil, Eraser, Scale
-
-### **Business Features**
-- **Customer Management**: Add, track, and manage customers
-- **Credit System**: Traditional Katha system for credit sales
-- **Stock Management**: Real-time inventory tracking
-- **Bill Generation**: Professional bill creation and printing
-- **Payment Tracking**: Monitor customer payments and dues
-
-## 🎨 UI/UX Features
-
-- **Modern Design**: Clean, professional interface
-- **Realistic Images**: High-quality product photos from Unsplash
-- **Responsive Layout**: Works on desktop, tablet, and mobile
-- **Smooth Animations**: Enhanced user experience
-- **Intuitive Navigation**: Easy-to-use interface
-
-## 🔧 Customization
-
-### **Adding New Products**
-Edit the `categories` array in `index.html`:
-```javascript
+**Response:**
+```json
 {
-  name: "New Product",
-  price: 50,
-  stock: 100,
-  image: "🍎",
-  unit: "kg",
-  description: "Product description",
-  rating: 4.5,
-  reviews: 10
+  "success": true,
+  "data": {
+    "Tomato": {
+      "quantity": 50,
+      "category": "Vegetables",
+      "lastUpdated": "2024-01-01T10:00:00.000Z"
+    }
+  }
 }
 ```
 
-### **Modifying Images**
-Update the `storeImages` object in `app.js`:
-```javascript
-const storeImages = {
-  vegetables: {
-    newProduct: "https://images.unsplash.com/photo-...",
-  }
-};
+#### Add/Update Stock
+```http
+POST /api/stock
+Content-Type: application/json
+
+{
+  "itemName": "Tomato",
+  "quantity": 25,
+  "category": "Vegetables"
+}
 ```
 
-## 🌐 Deployment
+#### Update Specific Item
+```http
+PUT /api/stock/Tomato
+Content-Type: application/json
 
-### **GitHub Pages**
-1. Push code to GitHub repository
-2. Go to Settings > Pages
-3. Select source branch (main/master)
-4. Your site will be live at `https://username.github.io/repository-name`
+{
+  "quantity": 75,
+  "category": "Vegetables"
+}
+```
 
-### **Netlify**
-1. Drag and drop your project folder to Netlify
-2. Automatic deployment and HTTPS
-3. Custom domain support
+#### Remove Item
+```http
+DELETE /api/stock/Tomato
+```
 
-## 📊 Data Management
+#### Get Low Stock Items (≤10 units)
+```http
+GET /api/stock/low
+```
 
-- **Customer Data**: Stored in browser localStorage
-- **Cart Data**: Persistent across sessions
-- **Stock Data**: Real-time updates
-- **Katha Records**: Complete transaction history
+#### Get Out of Stock Items
+```http
+GET /api/stock/out
+```
 
-## 🔒 Security Features
+#### Get Stock Statistics
+```http
+GET /api/stock/stats
+```
 
-- **Admin Authentication**: Secure login system
-- **Data Validation**: Input validation and sanitization
-- **Local Storage**: Data stays on user's device
-- **Session Management**: Proper login/logout handling
+## 🎯 Usage
 
-## 🚀 Future Enhancements
+### Stock Management
+1. Click **📦 Stock** in the navigation
+2. View current stock levels and statistics
+3. Add new stock using the form
+4. Use quick add buttons for existing items
+5. Monitor low stock and out-of-stock items
 
-- [ ] **Backend Integration**: Node.js/Express server
-- [ ] **Database**: MongoDB/PostgreSQL for data persistence
-- [ ] **Payment Gateway**: Razorpay/Stripe integration
-- [ ] **Mobile App**: React Native/PWA
-- [ ] **Multi-language**: Hindi, English support
-- [ ] **Barcode Scanning**: Product scanning feature
-- [ ] **Cloud Storage**: Firebase/AWS integration
-- [ ] **Analytics**: Sales reports and insights
+### Customer Management
+1. Click **👤 Add Customer** to add new customers
+2. Set credit limits for credit-based shopping
+3. View customer list and manage existing customers
+
+### Shopping
+1. Select a customer or add a new one
+2. Browse categories and add items to cart
+3. Generate bills and print receipts
+4. Track credit purchases in the Katha system
+
+## 📁 File Structure
+
+```
+grocery store/
+├── server.js              # Backend server (Express)
+├── app.js                 # Frontend JavaScript
+├── index.html             # Main HTML file
+├── style.css              # Styles
+├── package.json           # Dependencies and scripts
+├── stockData.json         # Stock data storage (auto-generated)
+├── components/            # Images and assets
+└── README.md             # This file
+```
+
+## 🔧 Development
+
+### Running in Development Mode
+```bash
+npm run dev
+```
+This uses nodemon for auto-restart on file changes.
+
+### Running Frontend Only
+```bash
+npm run client
+```
+For testing without backend (uses localStorage).
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+1. **Port 3000 Already in Use**
+   ```bash
+   # Find process using port 3000
+   lsof -i :3000
+   # Kill the process
+   kill -9 <PID>
+   ```
+
+2. **CORS Errors**
+   - Make sure the backend server is running
+   - Check that you're accessing via http://localhost:3000
+
+3. **Stock Data Not Persisting**
+   - Verify stockData.json file exists
+   - Check file permissions
+   - Restart the server
+
+### Debug Mode
+- Open browser console (F12) for frontend debugging
+- Check server console for backend logs
+- API responses include detailed error messages
+
+## 📈 Future Enhancements
+
+- [ ] Database integration (MongoDB/PostgreSQL)
+- [ ] User authentication and authorization
+- [ ] Real-time notifications for low stock
+- [ ] Advanced reporting and analytics
+- [ ] Mobile app integration
+- [ ] Barcode scanning
+- [ ] Supplier management
+- [ ] Automated reordering
 
 ## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Submit a pull request
+4. Test thoroughly
+5. Submit a pull request
 
 ## 📄 License
 
-This project is open source and available under the [MIT License](LICENSE).
-
-## 👨‍💻 Author
-
-**Smart General Store** - A complete POS solution for Indian grocery stores.
+This project is licensed under the ISC License.
 
 ---
 
-**⭐ Star this repository if you find it helpful!**
-
-**🏪 Your Smart General Store is ready for business!** 
+**Note**: This is a development version. For production use, consider implementing proper security measures, database storage, and user authentication. 

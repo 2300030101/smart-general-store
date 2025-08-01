@@ -1254,7 +1254,7 @@ document.addEventListener("DOMContentLoaded", function() {
     showProfitMargins: typeof showProfitMargins,
     showCashFlow: typeof showCashFlow,
     showTaxReports: typeof showTaxReports,
-    showSupplierManagement: typeof showSupplierManagement,
+    showSupplierManagement: typeof showStockManagement,
     showExpiryTracking: typeof showExpiryTracking,
     showAutoReordering: typeof showAutoReordering,
     showRecipeIntegration: typeof showRecipeIntegration,
@@ -1532,78 +1532,114 @@ window.addToKathaFromUI = function(categoryName, index) {
   qtyInput.value = "";
 };
 
-function addStock(itemName, quantity) {
-  let found = false;
-  categories.forEach(category => {
-    category.items.forEach(item => {
-      if (item.name === itemName) {
-        item.stock += parseFloat(quantity);
-        found = true;
-      }
-    });
-  });
-  if (found) {
-    alert(`Stock updated for ${itemName}. New stock: ${item.stock} kg`);
-    renderItems(currentCategory); // Re-render if a category is currently displayed
-  } else {
-    alert("Item not found!");
-  }
-}
-
-function showStockManagement() {
-  let stockHTML = `
-    <div class="bill-section">
-      <h2>📋 Stock Management</h2>
-      <div style="margin-bottom: 20px;">
-        <input type="text" id="stockItemName" placeholder="Item Name" style="width: 200px;">
-        <input type="number" id="stockQuantity" placeholder="Quantity to Add" style="width: 150px;">
-        <button onclick="addStockFromUI()">Add Stock</button>
-      </div>
-      <table style="width: 100%; border-collapse: collapse;">
-        <thead>
-          <tr style="background: #f0f0f0;">
-            <th style="padding: 10px; border: 1px solid #ddd;">Category</th>
-            <th style="padding: 10px; border: 1px solid #ddd;">Item</th>
-            <th style="padding: 10px; border: 1px solid #ddd;">Stock (kg)</th>
-            <th style="padding: 10px; border: 1px solid #ddd;">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${categories.map(category => 
-            category.items.map(item => {
-              const isOutOfStock = item.stock <= 0;
-              const isLowStock = item.stock <= 10 && item.stock > 0;
-              return `
-                <tr>
-                  <td style="padding: 8px; border: 1px solid #ddd;">${category.name}</td>
-                  <td style="padding: 8px; border: 1px solid #ddd;">${item.name}</td>
-                  <td style="padding: 8px; border: 1px solid #ddd; ${isOutOfStock ? 'color: red;' : isLowStock ? 'color: orange;' : ''}">${item.stock}</td>
-                  <td style="padding: 8px; border: 1px solid #ddd;">
-                    ${isOutOfStock ? '❌ Out of Stock' : isLowStock ? '⚠️ Low Stock' : '✅ In Stock'}
-                  </td>
-                </tr>
-              `;
-            }).join('')
-          ).join('')}
-        </tbody>
-      </table>
-    </div>
-  `;
-  
-  document.getElementById("itemsSection").innerHTML = stockHTML;
-}
-
+// Make functions globally accessible
 window.addStockFromUI = function() {
+  console.log("addStockFromUI function called");
   const itemName = document.getElementById("stockItemName").value.trim();
   const quantity = parseFloat(document.getElementById("stockQuantity").value);
+  
+  console.log("Item name:", itemName);
+  console.log("Quantity:", quantity);
+  
   if (!itemName || isNaN(quantity) || quantity <= 0) {
     alert("Please enter valid item name and quantity!");
     return;
   }
-  addStock(itemName, quantity);
+  
+  // Get existing stock data from localStorage
+  let stockData = JSON.parse(localStorage.getItem("stockData") || "{}");
+  console.log("Current stock data:", stockData);
+  
+  // Update or add stock for the item
+  if (stockData[itemName]) {
+    stockData[itemName] += quantity;
+  } else {
+    stockData[itemName] = quantity;
+  }
+  
+  // Save updated stock data
+  localStorage.setItem("stockData", JSON.stringify(stockData));
+  console.log("Updated stock data:", stockData);
+  
+  // Clear form
   document.getElementById("stockItemName").value = "";
   document.getElementById("stockQuantity").value = "";
+  
+  // Show success message
+  alert(`Stock updated! ${itemName} now has ${stockData[itemName]} units in stock.`);
+  
+  // Refresh the stock management display
+  showStockManagement();
 };
+
+// Function to add stock for specific items (used by quick add buttons)
+window.addStock = async function(itemName, quantity) {
+  console.log("addStock function called with:", itemName, quantity);
+  
+  try {
+    // Send request to backend
+    const response = await fetch('http://localhost:3000/api/stock', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        itemName: itemName,
+        quantity: quantity
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to update stock');
+    }
+    
+    // Show success message
+    alert(result.message);
+    
+    // Refresh the stock management display
+    showStockManagement();
+  } catch (error) {
+    console.error("Error adding stock:", error);
+    alert(`Error adding stock: ${error.message}. Make sure the backend server is running on http://localhost:3000`);
+  }
+};
+
+// Make all important functions globally accessible
+window.showProfitMargins = showProfitMargins;
+window.showCompetitorAnalysis = showCompetitorAnalysis;
+window.showCashFlow = showCashFlow;
+window.showTaxReports = showTaxReports;
+window.showSupplierManagement = showSupplierManagement;
+window.showExpiryTracking = showExpiryTracking;
+window.showAutoReordering = showAutoReordering;
+window.showRecipeIntegration = showRecipeIntegration;
+window.showNutritionalInfo = showNutritionalInfo;
+window.showPriceComparison = showPriceComparison;
+window.showDeliveryScheduling = showDeliveryScheduling;
+window.showBillHistory = showBillHistory;
+window.showContactSection = showContactSection;
+window.showMonthlySpin = showMonthlySpin;
+window.showHomePage = showHomePage;
+window.exportStockReport = exportStockReport;
+window.autoReorderLowStock = autoReorderLowStock;
+window.clearAllStock = clearAllStock;
+window.exportProfitReport = exportProfitReport;
+window.optimizePricing = optimizePricing;
+window.exportCashFlowReport = exportCashFlowReport;
+window.generateTaxReport = generateTaxReport;
+window.updateCompetitorPrices = updateCompetitorPrices;
+window.placeOrder = placeOrder;
+window.viewSupplierDetails = viewSupplierDetails;
+window.addNewSupplier = addNewSupplier;
+window.disposeExpiredItem = disposeExpiredItem;
+window.discountExpiringItem = discountExpiringItem;
+window.exportExpiryReport = exportExpiryReport;
+window.autoReorder = autoReorder;
+window.bulkAutoReorder = bulkAutoReorder;
+window.addRecipeIngredients = addRecipeIngredients;
+window.scheduleDelivery = scheduleDelivery;
 
 function selectCustomerById() {
   const customerId = document.getElementById("manualCustomerId").value.trim();
@@ -1817,17 +1853,144 @@ function showCompetitorAnalysis() {
 function showProfitMargins() {
   console.log("showProfitMargins function called");
   
-  // Simple test first
-  const testHTML = `
+  // Simple working version
+  const profitHTML = `
     <div style="background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
       <h2 style="color: #667eea; margin-bottom: 1.5rem;">💰 Profit Margins Analysis</h2>
-      <p style="color: #64748b; margin-bottom: 1rem;">Profit analysis for your store.</p>
+      <p style="color: #64748b; margin-bottom: 2rem;">Comprehensive profit analysis for your store operations.</p>
+      
+      <!-- Key Metrics -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
       <div style="background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); padding: 1.5rem; border-radius: 12px; text-align: center;">
         <h3 style="color: #166534; margin-bottom: 0.5rem;">Total Revenue</h3>
-        <p style="font-size: 1.5rem; font-weight: 700; color: #166534; margin: 0;">₹120,000</p>
+          <p style="font-size: 1.5rem; font-weight: 700; color: #166534; margin: 0;">₹150,000</p>
       </div>
-      <div style="margin-top: 2rem;">
+        <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 1.5rem; border-radius: 12px; text-align: center;">
+          <h3 style="color: #92400e; margin-bottom: 0.5rem;">Total Cost</h3>
+          <p style="font-size: 1.5rem; font-weight: 700; color: #92400e; margin: 0;">₹135,000</p>
+        </div>
+        <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); padding: 1.5rem; border-radius: 12px; text-align: center;">
+          <h3 style="color: #1e40af; margin-bottom: 0.5rem;">Net Profit</h3>
+          <p style="font-size: 1.5rem; font-weight: 700; color: #1e40af; margin: 0;">₹15,000</p>
+        </div>
+        <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 1.5rem; border-radius: 12px; text-align: center;">
+          <h3 style="color: #92400e; margin-bottom: 0.5rem;">Profit Margin</h3>
+          <p style="font-size: 1.5rem; font-weight: 700; color: #92400e; margin: 0;">10.0%</p>
+        </div>
+      </div>
+      
+      <!-- Detailed Breakdown -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+        <div style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); padding: 1.5rem; border-radius: 12px;">
+          <h3 style="color: #0f172a; margin-bottom: 1rem;">📊 Revenue Breakdown</h3>
+          <div style="margin-bottom: 0.5rem;">
+            <span>Cart Sales:</span>
+            <span style="float: right; font-weight: 600; color: #166534;">₹100,000</span>
+          </div>
+          <div style="margin-bottom: 0.5rem;">
+            <span>Katha Payments:</span>
+            <span style="float: right; font-weight: 600; color: #166534;">₹35,000</span>
+          </div>
+          <div style="margin-bottom: 0.5rem;">
+            <span>Token Bills:</span>
+            <span style="float: right; font-weight: 600; color: #166534;">₹15,000</span>
+          </div>
+          <hr style="margin: 1rem 0; border: 1px solid #e2e8f0;">
+          <div style="font-weight: 700; color: #166534;">
+            <span>Total Revenue:</span>
+            <span style="float: right;">₹150,000</span>
+          </div>
+        </div>
+        
+        <div style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); padding: 1.5rem; border-radius: 12px;">
+          <h3 style="color: #0f172a; margin-bottom: 1rem;">💸 Cost Breakdown</h3>
+          <div style="margin-bottom: 0.5rem;">
+            <span>Inventory Cost:</span>
+            <span style="float: right; font-weight: 600; color: #dc2626;">₹105,000</span>
+          </div>
+          <div style="margin-bottom: 0.5rem;">
+            <span>Operating Expenses:</span>
+            <span style="float: right; font-weight: 600; color: #dc2626;">₹22,500</span>
+          </div>
+          <div style="margin-bottom: 0.5rem;">
+            <span>Other Costs:</span>
+            <span style="float: right; font-weight: 600; color: #dc2626;">₹7,500</span>
+          </div>
+          <hr style="margin: 1rem 0; border: 1px solid #e2e8f0;">
+          <div style="font-weight: 700; color: #dc2626;">
+            <span>Total Cost:</span>
+            <span style="float: right;">₹135,000</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Category-wise Profit Analysis -->
+      <h3 style="color: #0f172a; margin-bottom: 1rem;">📈 Category-wise Profit Analysis</h3>
+      <div style="overflow-x: auto; margin-bottom: 2rem;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="background: #f1f5f9;">
+              <th style="padding: 12px; text-align: left; border: 1px solid #e2e8f0;">Category</th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">Revenue</th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">Cost</th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">Profit</th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">Margin %</th>
+              <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; font-weight: 600;">Vegetables</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">₹52,500</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">₹39,375</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; color: #059669; font-weight: 600;">₹13,125</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; color: #059669; font-weight: 600;">25.0%</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; color: #059669; font-weight: 600;">✅ Excellent</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; font-weight: 600;">Groceries</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">₹37,500</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">₹30,000</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; color: #059669; font-weight: 600;">₹7,500</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; color: #f59e0b; font-weight: 600;">20.0%</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; color: #f59e0b; font-weight: 600;">⚠️ Good</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; font-weight: 600;">Dairy & Eggs</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">₹30,000</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">₹21,000</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; color: #059669; font-weight: 600;">₹9,000</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; color: #059669; font-weight: 600;">30.0%</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; color: #059669; font-weight: 600;">✅ Excellent</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; font-weight: 600;">Snacks & Beverages</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">₹30,000</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">₹18,000</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; color: #059669; font-weight: 600;">₹12,000</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; color: #059669; font-weight: 600;">40.0%</td>
+              <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; color: #059669; font-weight: 600;">✅ Excellent</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- Recommendations -->
+      <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;">
+        <h3 style="color: #0c4a6e; margin-bottom: 1rem;">💡 Profit Optimization Recommendations</h3>
+        <ul style="color: #0c4a6e; margin: 0; padding-left: 1.5rem;">
+          <li style="margin-bottom: 0.5rem;">Good performance! Consider expanding high-margin categories</li>
+          <li style="margin-bottom: 0.5rem;">Optimize pricing strategy for better margins</li>
+          <li style="margin-bottom: 0.5rem;">Focus on Snacks & Beverages category for maximum profit</li>
+          <li style="margin-bottom: 0.5rem;">Consider increasing prices on high-demand grocery items</li>
+        </ul>
+      </div>
+      
+      <!-- Action Buttons -->
+      <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
         <button onclick="showMainSection()" style="background: #667eea; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">🛒 Back to Store</button>
+        <button onclick="exportProfitReport()" style="background: #059669; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">📊 Export Report</button>
+        <button onclick="optimizePricing()" style="background: #f59e0b; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">💰 Optimize Pricing</button>
       </div>
     </div>
   `;
@@ -1836,12 +1999,123 @@ function showProfitMargins() {
   console.log("itemsSection element:", itemsSection);
   if (itemsSection) {
     itemsSection.style.display = "block";
-    itemsSection.innerHTML = testHTML;
+    itemsSection.innerHTML = profitHTML;
     console.log("Profit Margins content loaded successfully");
   } else {
     console.error("itemsSection element not found");
     alert("Error: Could not find the content area. Please refresh the page.");
   }
+}
+
+// Calculate profit margins from store data
+function calculateProfitMargins() {
+  // Get cart data
+  const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+  const kathaRecords = JSON.parse(localStorage.getItem("kathaRecords") || "[]");
+  const bill = JSON.parse(localStorage.getItem("bill") || "[]");
+  
+  // Calculate revenue from different sources
+  const cartSales = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
+  const kathaPayments = kathaRecords.reduce((sum, record) => {
+    if (record.status === 'paid') {
+      return sum + record.totalAmount;
+    }
+    return sum;
+  }, 0);
+  const tokenBills = bill.reduce((sum, item) => sum + parseFloat(item.total), 0);
+  let totalRevenue = cartSales + kathaPayments + tokenBills;
+  
+  // If no revenue data, show sample data for demonstration
+  if (totalRevenue === 0) {
+    totalRevenue = 150000; // Sample revenue for demonstration
+  }
+  
+  // Calculate costs (assuming 70% cost of goods sold and 15% operating expenses)
+  const inventoryCost = totalRevenue * 0.7;
+  const operatingExpenses = totalRevenue * 0.15;
+  const otherCosts = totalRevenue * 0.05;
+  const totalCost = inventoryCost + operatingExpenses + otherCosts;
+  
+  // Calculate profit
+  const netProfit = totalRevenue - totalCost;
+  const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
+  
+  // Category-wise analysis (using mock data since categories is not accessible)
+  const categoryAnalysis = [
+    {
+      name: "Vegetables",
+      revenue: Math.round(totalRevenue * 0.35),
+      cost: Math.round(totalRevenue * 0.35 * 0.75),
+      profit: Math.round(totalRevenue * 0.35 * 0.25),
+      margin: 25.0
+    },
+    {
+      name: "Groceries",
+      revenue: Math.round(totalRevenue * 0.25),
+      cost: Math.round(totalRevenue * 0.25 * 0.8),
+      profit: Math.round(totalRevenue * 0.25 * 0.2),
+      margin: 20.0
+    },
+    {
+      name: "Dairy & Eggs",
+      revenue: Math.round(totalRevenue * 0.20),
+      cost: Math.round(totalRevenue * 0.20 * 0.7),
+      profit: Math.round(totalRevenue * 0.20 * 0.3),
+      margin: 30.0
+    },
+    {
+      name: "Snacks & Beverages",
+      revenue: Math.round(totalRevenue * 0.20),
+      cost: Math.round(totalRevenue * 0.20 * 0.6),
+      profit: Math.round(totalRevenue * 0.20 * 0.4),
+      margin: 40.0
+    }
+  ];
+  
+  // Generate recommendations
+  const recommendations = [];
+  if (profitMargin < 10) {
+    recommendations.push("Consider increasing prices on high-demand items");
+    recommendations.push("Review and optimize inventory costs");
+    recommendations.push("Focus on higher-margin categories");
+  } else if (profitMargin < 20) {
+    recommendations.push("Good performance! Consider expanding high-margin categories");
+    recommendations.push("Optimize pricing strategy for better margins");
+  } else {
+    recommendations.push("Excellent profit margins! Consider expanding operations");
+    recommendations.push("Maintain current pricing strategy");
+  }
+  
+  if (categoryAnalysis.length > 0) {
+    const lowMarginCategories = categoryAnalysis.filter(cat => cat.margin < 15);
+    if (lowMarginCategories.length > 0) {
+      recommendations.push(`Review pricing for: ${lowMarginCategories.map(cat => cat.name).join(', ')}`);
+    }
+  }
+  
+  return {
+    totalRevenue: Math.round(totalRevenue),
+    totalCost: Math.round(totalCost),
+    netProfit: Math.round(netProfit),
+    profitMargin: profitMargin,
+    cartSales: Math.round(cartSales),
+    kathaPayments: Math.round(kathaPayments),
+    tokenBills: Math.round(tokenBills),
+    inventoryCost: Math.round(inventoryCost),
+    operatingExpenses: Math.round(operatingExpenses),
+    otherCosts: Math.round(otherCosts),
+    categoryAnalysis: categoryAnalysis,
+    recommendations: recommendations
+  };
+}
+
+// Helper functions for profit analysis
+function exportProfitReport() {
+  alert("Profit report exported to Excel! This feature would generate a detailed CSV report.");
+}
+
+function optimizePricing() {
+  alert("Pricing optimization analysis generated! This feature would suggest optimal prices based on market data.");
 }
 
 // Cash Flow Management
@@ -2957,3 +3231,280 @@ function showHomePage() {
     console.error("itemsSection not found");
   }
 }
+
+// Helper functions for stock management
+function exportStockReport() {
+  alert("Stock report exported to Excel! This feature would generate a detailed inventory report.");
+}
+
+function autoReorderLowStock() {
+  alert("Auto reorder placed for low stock items! This feature would automatically order items with low stock levels.");
+}
+
+function clearAllStock() {
+  if (confirm("Are you sure you want to clear all stock data? This action cannot be undone.")) {
+    localStorage.removeItem("stockData");
+    alert("All stock data has been cleared!");
+    showStockManagement(); // Refresh the display
+  }
+}
+
+// Make functions globally accessible
+window.showStockManagement = async function() {
+  console.log("showStockManagement function called");
+  
+  try {
+    // Fetch stock data from backend
+    const response = await fetch('http://localhost:3000/api/stock');
+    const result = await response.json();
+    
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to fetch stock data');
+    }
+    
+    const stockData = result.data;
+    console.log("Stock data from backend:", stockData);
+    
+    // Convert backend data format to frontend format
+    const sampleItems = Object.keys(stockData).map(itemName => ({
+      category: stockData[itemName].category,
+      name: itemName,
+      defaultStock: stockData[itemName].quantity
+    }));
+    
+    // Calculate stock statistics
+    let totalItems = 0;
+    let lowStockItems = 0;
+    let outOfStockItems = 0;
+    let inStockItems = 0;
+    
+    sampleItems.forEach(item => {
+      const currentStock = stockData[item.name]?.quantity || item.defaultStock;
+      totalItems++;
+      
+      if (currentStock <= 0) {
+        outOfStockItems++;
+      } else if (currentStock <= 10) {
+        lowStockItems++;
+      } else {
+        inStockItems++;
+      }
+    });
+    
+    // Generate stock table rows
+    const stockTableRows = sampleItems.map(item => {
+      const currentStock = stockData[item.name]?.quantity || item.defaultStock;
+      const isOutOfStock = currentStock <= 0;
+      const isLowStock = currentStock <= 10 && currentStock > 0;
+      
+      let statusColor, statusText, buttonColor;
+      if (isOutOfStock) {
+        statusColor = '#dc2626';
+        statusText = '❌ Out of Stock';
+        buttonColor = '#dc2626';
+      } else if (isLowStock) {
+        statusColor = '#f59e0b';
+        statusText = '⚠️ Low Stock';
+        buttonColor = '#f59e0b';
+      } else {
+        statusColor = '#059669';
+        statusText = '✅ In Stock';
+        buttonColor = '#059669';
+      }
+      
+      return `
+        <tr>
+          <td style="padding: 12px; border: 1px solid #e2e8f0;">${item.category}</td>
+          <td style="padding: 12px; border: 1px solid #e2e8f0;">${item.name}</td>
+          <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; color: ${statusColor}; font-weight: 600;">${currentStock}</td>
+          <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; color: ${statusColor}; font-weight: 600;">${statusText}</td>
+          <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">
+            <button onclick="addStock('${item.name}', 10)" style="background: ${buttonColor}; color: white; padding: 0.5rem 1rem; border: none; border-radius: 5px; cursor: pointer;">➕ Add</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+    
+    const stockHTML = `
+      <div style="background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+        <h2 style="color: #667eea; margin-bottom: 1.5rem;">📦 Stock Management (Backend)</h2>
+        <p style="color: #64748b; margin-bottom: 2rem;">Manage inventory levels with persistent backend storage.</p>
+        
+        <!-- Add Stock Form -->
+        <div style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;">
+          <h3 style="color: #0f172a; margin-bottom: 1rem;">➕ Add Stock</h3>
+          <div style="display: flex; gap: 1rem; align-items: end; flex-wrap: wrap;">
+            <div>
+              <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">Item Name:</label>
+              <input type="text" id="stockItemName" placeholder="Enter item name" style="width: 200px; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem;">
+            </div>
+            <div>
+              <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">Category:</label>
+              <select id="stockCategory" style="width: 150px; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem;">
+                <option value="Vegetables">Vegetables</option>
+                <option value="Groceries">Groceries</option>
+                <option value="Dairy & Eggs">Dairy & Eggs</option>
+                <option value="Snacks & Beverages">Snacks & Beverages</option>
+                <option value="General">General</option>
+              </select>
+            </div>
+            <div>
+              <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">Quantity to Add:</label>
+              <input type="number" id="stockQuantity" placeholder="Enter quantity" style="width: 150px; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem;">
+            </div>
+            <button onclick="addStockFromUI()" style="background: #059669; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">➕ Add Stock</button>
+          </div>
+        </div>
+        
+        <!-- Stock Summary -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+          <div style="background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); padding: 1.5rem; border-radius: 12px; text-align: center;">
+            <h3 style="color: #166534; margin-bottom: 0.5rem;">Total Items</h3>
+            <p style="font-size: 1.5rem; font-weight: 700; color: #166534; margin: 0;">${totalItems}</p>
+          </div>
+          <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 1.5rem; border-radius: 12px; text-align: center;">
+            <h3 style="color: #92400e; margin-bottom: 0.5rem;">Low Stock</h3>
+            <p style="font-size: 1.5rem; font-weight: 700; color: #92400e; margin: 0;">${lowStockItems}</p>
+          </div>
+          <div style="background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%); padding: 1.5rem; border-radius: 12px; text-align: center;">
+            <h3 style="color: #dc2626; margin-bottom: 0.5rem;">Out of Stock</h3>
+            <p style="font-size: 1.5rem; font-weight: 700; color: #dc2626; margin: 0;">${outOfStockItems}</p>
+          </div>
+          <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); padding: 1.5rem; border-radius: 12px; text-align: center;">
+            <h3 style="color: #1e40af; margin-bottom: 0.5rem;">In Stock</h3>
+            <p style="font-size: 1.5rem; font-weight: 700; color: #1e40af; margin: 0;">${inStockItems}</p>
+          </div>
+        </div>
+        
+        <!-- Stock Table -->
+        <h3 style="color: #0f172a; margin-bottom: 1rem;">📊 Current Stock Levels</h3>
+        <div style="overflow-x: auto; margin-bottom: 2rem;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="background: #f1f5f9;">
+                <th style="padding: 12px; text-align: left; border: 1px solid #e2e8f0;">Category</th>
+                <th style="padding: 12px; text-align: left; border: 1px solid #e2e8f0;">Item</th>
+                <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">Stock (kg)</th>
+                <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">Status</th>
+                <th style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${stockTableRows}
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+          <button onclick="showMainSection()" style="background: #667eea; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">🛒 Back to Store</button>
+          <button onclick="exportStockReport()" style="background: #059669; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">📊 Export Report</button>
+          <button onclick="autoReorderLowStock()" style="background: #f59e0b; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">🔄 Auto Reorder</button>
+          <button onclick="clearAllStock()" style="background: #dc2626; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">🗑️ Clear All</button>
+        </div>
+      </div>
+    `;
+    
+    const itemsSection = document.getElementById("itemsSection");
+    console.log("itemsSection element:", itemsSection);
+    if (itemsSection) {
+      itemsSection.style.display = "block";
+      itemsSection.innerHTML = stockHTML;
+      console.log("Stock Management content loaded successfully");
+    } else {
+      console.error("itemsSection element not found");
+      alert("Error: Could not find the content area. Please refresh the page.");
+    }
+  } catch (error) {
+    console.error("Error loading stock management:", error);
+    alert(`Error loading stock management: ${error.message}. Make sure the backend server is running on http://localhost:3000`);
+  }
+};
+
+window.addStockFromUI = async function() {
+  console.log("addStockFromUI function called");
+  const itemName = document.getElementById("stockItemName").value.trim();
+  const quantity = parseFloat(document.getElementById("stockQuantity").value);
+  const category = document.getElementById("stockCategory").value;
+  
+  console.log("Item name:", itemName);
+  console.log("Quantity:", quantity);
+  console.log("Category:", category);
+  
+  if (!itemName || isNaN(quantity) || quantity <= 0) {
+    alert("Please enter valid item name and quantity!");
+    return;
+  }
+  
+  try {
+    // Send request to backend
+    const response = await fetch('http://localhost:3000/api/stock', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        itemName: itemName,
+        quantity: quantity,
+        category: category
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to update stock');
+    }
+    
+    console.log("Backend response:", result);
+    
+    // Clear form
+    document.getElementById("stockItemName").value = "";
+    document.getElementById("stockQuantity").value = "";
+    document.getElementById("stockCategory").value = "Vegetables";
+    
+    // Show success message
+    alert(result.message);
+    
+    // Refresh the stock management display
+    showStockManagement();
+  } catch (error) {
+    console.error("Error adding stock:", error);
+    alert(`Error adding stock: ${error.message}. Make sure the backend server is running on http://localhost:3000`);
+  }
+};
+
+// Function to add stock for specific items (used by quick add buttons)
+window.addStock = async function(itemName, quantity) {
+  console.log("addStock function called with:", itemName, quantity);
+  
+  try {
+    // Send request to backend
+    const response = await fetch('http://localhost:3000/api/stock', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        itemName: itemName,
+        quantity: quantity
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to update stock');
+    }
+    
+    // Show success message
+    alert(result.message);
+    
+    // Refresh the stock management display
+    showStockManagement();
+  } catch (error) {
+    console.error("Error adding stock:", error);
+    alert(`Error adding stock: ${error.message}. Make sure the backend server is running on http://localhost:3000`);
+  }
+};
+

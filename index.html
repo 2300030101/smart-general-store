@@ -2028,6 +2028,7 @@
         <li><a href="#" id="stockManagement">📦 Stock</a></li>
         <li><a href="#" id="billHistory">📄 Bill History</a></li>
         <li><a href="#" id="profitMargins" onclick="showProfitMargins();" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: white; padding: 0.5rem 1rem; border-radius: 8px;">💰 Profits</a></li>
+        <li><a href="#" id="reminderBtn" onclick="checkOverduePayments();" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 0.5rem 1rem; border-radius: 8px;">🔔 Reminders</a></li>
         <li><a href="#" id="contactLink">📞 Contact</a></li>
         <li><a href="#" id="backToHome">🏠 Home</a></li>
       </ul>
@@ -2561,12 +2562,48 @@
         { name: "Ivy Gourd", price: 22, stock: 18, image: "🥒", unit: "kg", description: "Fresh tindora", rating: 4.2, reviews: 5 }
       ]},
       { name: "Groceries", icon: "🛒", items: [
-        { name: "Rice", price: 50, stock: 200, image: "🍚", unit: "kg", description: "Basmati rice", rating: 4.7, reviews: 25 },
-        { name: "Wheat Flour", price: 40, stock: 150, image: "🌾", unit: "kg", description: "Whole wheat flour", rating: 4.5, reviews: 18 },
-        { name: "Sugar", price: 30, stock: 80, image: "🍯", unit: "kg", description: "White sugar", rating: 4.3, reviews: 12 },
-        { name: "Salt", price: 10, stock: 100, image: "🧂", unit: "kg", description: "Iodized salt", rating: 4.1, reviews: 8 },
-        { name: "Oil", price: 90, stock: 60, image: "🫗", unit: "liter", description: "Sunflower oil", rating: 4.4, reviews: 15 },
-        { name: "Dal", price: 60, stock: 45, image: "🫘", unit: "kg", description: "Toor dal", rating: 4.6, reviews: 20 }
+        // Grains & Staples
+        { name: "Rice (Basmati)", price: 50, stock: 200, image: "🍚", unit: "kg", description: "Premium basmati rice", rating: 4.7, reviews: 25 },
+        { name: "Wheat Flour (Atta)", price: 40, stock: 150, image: "🌾", unit: "kg", description: "Whole wheat flour", rating: 4.5, reviews: 18 },
+        { name: "Maida (Refined)", price: 35, stock: 100, image: "🌾", unit: "kg", description: "Refined wheat flour", rating: 4.3, reviews: 15 },
+        { name: "Suji (Rava)", price: 40, stock: 80, image: "🌾", unit: "kg", description: "Semolina for upma", rating: 4.4, reviews: 12 },
+        { name: "Poha (Flattened Rice)", price: 38, stock: 60, image: "🍚", unit: "kg", description: "Flattened rice for breakfast", rating: 4.6, reviews: 20 },
+        // Pulses & Lentils
+        { name: "Toor Dal", price: 90, stock: 100, image: "🫘", unit: "kg", description: "Split pigeon peas", rating: 4.6, reviews: 20 },
+        { name: "Chana Dal", price: 70, stock: 90, image: "🫘", unit: "kg", description: "Split chickpeas", rating: 4.5, reviews: 18 },
+        { name: "Moong Dal", price: 80, stock: 80, image: "🫘", unit: "kg", description: "Split green gram", rating: 4.7, reviews: 22 },
+        { name: "Urad Dal (Split)", price: 85, stock: 70, image: "🫘", unit: "kg", description: "Split black gram", rating: 4.6, reviews: 19 },
+        { name: "Masoor Dal", price: 75, stock: 50, image: "🫘", unit: "kg", description: "Red lentils", rating: 4.4, reviews: 16 },
+        // Spices & Condiments
+        { name: "Salt (Iodized)", price: 10, stock: 100, image: "🧂", unit: "kg", description: "Iodized table salt", rating: 4.1, reviews: 8 },
+        { name: "Red Chilli Powder", price: 60, stock: 60, image: "🌶️", unit: "250g", description: "Spicy red chilli powder", rating: 4.5, reviews: 25 },
+        { name: "Coriander Powder", price: 70, stock: 50, image: "🌿", unit: "250g", description: "Ground coriander powder", rating: 4.4, reviews: 20 },
+        { name: "Turmeric Powder", price: 50, stock: 40, image: "🟡", unit: "250g", description: "Ground turmeric powder", rating: 4.6, reviews: 22 },
+        { name: "Cumin Seeds (Jeera)", price: 110, stock: 30, image: "🌱", unit: "200g", description: "Whole cumin seeds", rating: 4.7, reviews: 18 },
+        { name: "Mustard Seeds (Rai)", price: 50, stock: 30, image: "🟡", unit: "200g", description: "Black mustard seeds", rating: 4.3, reviews: 15 },
+        { name: "Garam Masala", price: 60, stock: 25, image: "🌶️", unit: "100g", description: "Mixed spice powder", rating: 4.8, reviews: 30 },
+        // Oils & Fats
+        { name: "Sunflower Oil", price: 90, stock: 60, image: "🫗", unit: "liter", description: "Refined sunflower oil", rating: 4.4, reviews: 15 },
+        { name: "Groundnut Oil", price: 130, stock: 30, image: "🫗", unit: "liter", description: "Pure groundnut oil", rating: 4.6, reviews: 12 },
+        { name: "Ghee (Desi)", price: 480, stock: 40, image: "🧈", unit: "liter", description: "Pure cow ghee", rating: 4.8, reviews: 25 },
+        // Sweeteners
+        { name: "Sugar", price: 30, stock: 80, image: "🍯", unit: "kg", description: "White refined sugar", rating: 4.3, reviews: 12 },
+        { name: "Jaggery (Gur)", price: 40, stock: 50, image: "🍯", unit: "kg", description: "Natural palm jaggery", rating: 4.5, reviews: 18 },
+        // Dry Goods & Others
+        { name: "Tea Powder", price: 140, stock: 60, image: "🍵", unit: "500g", description: "Black tea powder", rating: 4.6, reviews: 35 },
+        { name: "Tamarind", price: 35, stock: 40, image: "🌿", unit: "100g", description: "Dried tamarind pulp", rating: 4.4, reviews: 20 },
+        { name: "Besan (Gram Flour)", price: 60, stock: 60, image: "🌾", unit: "kg", description: "Chickpea flour", rating: 4.5, reviews: 25 },
+        { name: "Rusk (for tea)", price: 30, stock: 30, image: "🍞", unit: "pack", description: "Crispy tea rusk", rating: 4.3, reviews: 15 },
+        // Canned & Packaged
+        { name: "Tomato Puree", price: 45, stock: 40, image: "🍅", unit: "400g", description: "Pure tomato puree", rating: 4.4, reviews: 18 },
+        { name: "Mixed Pickle", price: 80, stock: 30, image: "🥒", unit: "500g", description: "Spicy mixed pickle", rating: 4.6, reviews: 22 },
+        { name: "Mango Pickle", price: 75, stock: 35, image: "🥭", unit: "500g", description: "Traditional mango pickle", rating: 4.5, reviews: 20 },
+        { name: "Lemon Pickle", price: 70, stock: 25, image: "🍋", unit: "500g", description: "Tangy lemon pickle", rating: 4.4, reviews: 16 },
+        { name: "Papad", price: 25, stock: 50, image: "🍘", unit: "pack", description: "Crispy papad", rating: 4.3, reviews: 15 },
+        // Honey & Jams
+        { name: "Pure Honey", price: 200, stock: 20, image: "🍯", unit: "500g", description: "Natural pure honey", rating: 4.8, reviews: 25 },
+        { name: "Mixed Fruit Jam", price: 60, stock: 30, image: "🍓", unit: "400g", description: "Mixed fruit preserve", rating: 4.5, reviews: 18 },
+        { name: "Mango Jam", price: 55, stock: 35, image: "🥭", unit: "400g", description: "Sweet mango jam", rating: 4.6, reviews: 20 }
       ]},
       { name: "Dairy & Eggs", icon: "🥛", items: [
         { name: "Milk", price: 60, stock: 100, image: "🥛", unit: "liter", description: "Fresh cow milk", rating: 4.8, reviews: 30 },
@@ -3918,6 +3955,23 @@
     }
 
     function addStock(itemName, quantity) {
+      console.log("addStock function called with:", itemName, quantity);
+      
+      // Get existing stock data from localStorage
+      let stockData = JSON.parse(localStorage.getItem("stockData") || "{}");
+      
+      // Update or add stock for the item
+      if (stockData[itemName]) {
+        stockData[itemName] += parseFloat(quantity);
+      } else {
+        stockData[itemName] = parseFloat(quantity);
+      }
+      
+      // Save updated stock data
+      localStorage.setItem("stockData", JSON.stringify(stockData));
+      console.log("Updated stock data:", stockData);
+      
+      // Also update the categories array for immediate display
       let found = false;
       categories.forEach(category => {
         category.items.forEach(item => {
@@ -3927,11 +3981,14 @@
           }
         });
       });
+      
       if (found) {
-        alert(`Stock updated for ${itemName}. New stock: ${item.stock} kg`);
-        renderItems(currentCategory); // Re-render if a category is currently displayed
+        alert(`Stock updated for ${itemName}. New stock: ${stockData[itemName]} units`);
+        // Refresh the stock management display
+        showStockManagement();
       } else {
-        alert("Item not found!");
+        alert("Item not found in categories, but stock has been saved!");
+        showStockManagement();
       }
     }
 
@@ -4028,6 +4085,21 @@
         e.preventDefault();
         showSpinWheel();
       };
+      // Add missing event handlers for profit margins and other buttons
+      document.getElementById("profitMargins").onclick = function(e) {
+        e.preventDefault();
+        if (typeof showProfitMargins === 'function') {
+          showProfitMargins();
+        } else {
+          alert("Profit margins feature is being loaded...");
+        }
+      };
+      
+      // Add reminder button handler
+      document.getElementById("reminderBtn").onclick = function(e) {
+        e.preventDefault();
+        checkOverduePayments();
+      };
       loadCart();
       showKathaSection(); // Initial display of Katha section
       
@@ -4041,18 +4113,193 @@
       checkOverduePayments();
     });
     
-    // Notification System
+    // Enhanced Reminder System for Pending Bills
     function checkOverduePayments() {
       const kathaRecords = JSON.parse(localStorage.getItem('kathaRecords') || '[]');
+      const customers = JSON.parse(localStorage.getItem('customers') || '[]');
+      
+      // Check for overdue payments
       const overdueRecords = kathaRecords.filter(record => 
         new Date(record.dueDate) < new Date() && record.status === 'pending'
       );
       
+      // Check for pending bills (not overdue yet)
+      const pendingRecords = kathaRecords.filter(record => 
+        new Date(record.dueDate) >= new Date() && record.status === 'pending'
+      );
+      
       if (overdueRecords.length > 0) {
-        showNotification(`⚠️ You have ${overdueRecords.length} overdue payment(s)! Check Katha section for details.`, 'warning');
+        showDetailedReminder(overdueRecords, customers, 'overdue');
+      }
+      
+      if (pendingRecords.length > 0) {
+        showDetailedReminder(pendingRecords, customers, 'pending');
       }
     }
     
+    function showDetailedReminder(records, customers, type) {
+      const reminderModal = document.createElement('div');
+      reminderModal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+      `;
+      
+      const isOverdue = type === 'overdue';
+      const title = isOverdue ? '🚨 Overdue Payment Reminders' : '📋 Pending Payment Reminders';
+      const bgColor = isOverdue ? '#dc2626' : '#f59e0b';
+      
+      let reminderHTML = `
+        <div style="
+          background: white;
+          border-radius: 20px;
+          padding: 2rem;
+          max-width: 800px;
+          max-height: 80vh;
+          overflow-y: auto;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        ">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h2 style="color: ${bgColor}; margin: 0;">${title}</h2>
+            <button onclick="this.parentElement.parentElement.parentElement.remove()" style="
+              background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #666;
+            ">✖</button>
+          </div>
+          
+          <div style="margin-bottom: 1rem;">
+            <p style="color: #666; margin: 0;">
+              ${isOverdue ? 
+                `⚠️ You have ${records.length} overdue payment(s) that need immediate attention!` :
+                `📋 You have ${records.length} pending payment(s) coming due soon.`
+              }
+            </p>
+          </div>
+          
+          <div style="display: grid; gap: 1rem;">
+      `;
+      
+      // Group records by customer
+      const customerGroups = {};
+      records.forEach(record => {
+        const customer = customers.find(c => c.id === record.customerId);
+        if (customer) {
+          if (!customerGroups[customer.id]) {
+            customerGroups[customer.id] = {
+              customer: customer,
+              records: []
+            };
+          }
+          customerGroups[customer.id].records.push(record);
+        }
+      });
+      
+      Object.values(customerGroups).forEach(group => {
+        const customer = group.customer;
+        const totalAmount = group.records.reduce((sum, record) => sum + parseFloat(record.amount), 0);
+        const daysOverdue = isOverdue ? 
+          Math.floor((new Date() - new Date(group.records[0].dueDate)) / (1000 * 60 * 60 * 24)) : 0;
+        
+        reminderHTML += `
+          <div style="
+            border: 2px solid ${isOverdue ? '#dc2626' : '#f59e0b'};
+            border-radius: 12px;
+            padding: 1.5rem;
+            background: ${isOverdue ? '#fef2f2' : '#fffbeb'};
+          ">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+              <div>
+                <h3 style="margin: 0; color: #1e293b;">👤 ${customer.name}</h3>
+                <p style="margin: 0.5rem 0; color: #666;">📞 ${customer.phone}</p>
+                <p style="margin: 0; color: #666;">🆔 Customer ID: ${customer.id}</p>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-size: 1.5rem; font-weight: 700; color: ${bgColor};">
+                  ₹${totalAmount.toFixed(2)}
+                </div>
+                <div style="color: ${bgColor}; font-weight: 600;">
+                  ${isOverdue ? `${daysOverdue} day(s) overdue` : 'Pending payment'}
+                </div>
+              </div>
+            </div>
+            
+            <div style="margin-bottom: 1rem;">
+              <h4 style="margin: 0 0 0.5rem 0; color: #374151;">📋 Payment Details:</h4>
+              ${group.records.map(record => `
+                <div style="
+                  background: white;
+                  border-radius: 8px;
+                  padding: 1rem;
+                  margin-bottom: 0.5rem;
+                  border-left: 4px solid ${bgColor};
+                ">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                      <div style="font-weight: 600;">${record.itemName}</div>
+                      <div style="color: #666; font-size: 0.9rem;">
+                        Quantity: ${record.quantity} ${record.unit || 'kg'} | 
+                        Due: ${new Date(record.dueDate).toLocaleDateString()}
+                      </div>
+                    </div>
+                    <div style="font-weight: 600; color: ${bgColor};">
+                      ₹${parseFloat(record.amount).toFixed(2)}
+                    </div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+            
+            <div style="display: flex; gap: 0.5rem;">
+              <button onclick="markAsPaid('${group.records[0].id}'); this.parentElement.parentElement.parentElement.parentElement.remove();" 
+                style="
+                  background: ${bgColor}; 
+                  color: white; 
+                  border: none; 
+                  padding: 0.5rem 1rem; 
+                  border-radius: 8px; 
+                  cursor: pointer;
+                ">✅ Mark as Paid</button>
+              <button onclick="showKathaSection(); this.parentElement.parentElement.parentElement.parentElement.remove();" 
+                style="
+                  background: #667eea; 
+                  color: white; 
+                  border: none; 
+                  padding: 0.5rem 1rem; 
+                  border-radius: 8px; 
+                  cursor: pointer;
+                ">📋 View All Records</button>
+            </div>
+          </div>
+        `;
+      });
+      
+      reminderHTML += `
+          </div>
+          
+          <div style="margin-top: 1.5rem; text-align: center;">
+            <button onclick="this.parentElement.parentElement.parentElement.remove()" 
+              style="
+                background: #6b7280; 
+                color: white; 
+                border: none; 
+                padding: 0.75rem 1.5rem; 
+                border-radius: 8px; 
+                cursor: pointer;
+              ">Close</button>
+          </div>
+        </div>
+      `;
+      
+      reminderModal.innerHTML = reminderHTML;
+      document.body.appendChild(reminderModal);
+    }
+        
     function showNotification(message, type = 'info') {
       const notification = document.createElement('div');
       notification.style.cssText = `
@@ -4062,7 +4309,7 @@
         background: ${type === 'warning' ? '#f59e0b' : type === 'error' ? '#dc2626' : '#059669'};
         color: white;
         padding: 1rem 1.5rem;
-        border-radius: 12px;
+            border-radius: 12px;
         box-shadow: 0 4px 20px rgba(0,0,0,0.2);
         z-index: 10000;
         max-width: 400px;
@@ -4076,8 +4323,8 @@
           </span>
           <span>${message}</span>
           <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: white; cursor: pointer; margin-left: auto;">✖</button>
-        </div>
-      `;
+          </div>
+        `;
       
       document.body.appendChild(notification);
       
@@ -5933,12 +6180,12 @@ ${customers.map(c => `${c.name}: ₹${c.currentDebt}`).join('\n')}
       const customers = JSON.parse(localStorage.getItem('customers') || '[]');
       const kathaRecords = JSON.parse(localStorage.getItem('kathaRecords') || '[]');
       const bills = JSON.parse(localStorage.getItem('bills') || '[]');
-
+      
       // Get overdue records
-      const overdueRecords = kathaRecords.filter(record =>
+      const overdueRecords = kathaRecords.filter(record => 
         new Date(record.dueDate) < new Date() && record.status === 'pending'
       );
-
+      
       // Get due today records
       const dueTodayRecords = kathaRecords.filter(record => {
         const dueDate = new Date(record.dueDate);
@@ -6137,11 +6384,11 @@ ${customers.map(c => `${c.name}: ₹${c.currentDebt}`).join('\n')}
       let paymentModalHTML = `
         <div id="paymentModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;">
           <div style="background: white; padding: 2rem; border-radius: 16px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
               <h2>💳 Collect Payment</h2>
               <button onclick="closePaymentModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">✖</button>
-            </div>
-            
+          </div>
+          
             <div style="margin-bottom: 1.5rem;">
               <h4>Customer: ${customer.name}</h4>
               <p><strong>Total Outstanding:</strong> ₹${customer.currentDebt}</p>
@@ -6369,8 +6616,8 @@ ${customers.map(c => `${c.name}: ₹${c.currentDebt}`).join('\n')}
             <div style="text-align: center; margin-top: 1rem;">
               <p style="margin: 0; color: #a0aec0; font-size: 0.85rem;">
                 <span style="margin-right: 0.5rem;">💡</span>New customer? Register to get started!
-              </p>
-            </div>
+            </p>
+          </div>
           </div>
         </div>
       `;
@@ -6787,21 +7034,21 @@ ${customers.map(c => `${c.name}: ₹${c.currentDebt}`).join('\n')}
       cartContainer.innerHTML = `
         ${preOrderCart.map(item => `
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; padding: 0.5rem; background: #f8fafc; border-radius: 4px;">
-            <div>
+              <div>
               <strong>${item.name}</strong><br>
               <small>${item.quantity} kg × ₹${item.price}</small>
-            </div>
-            <div style="text-align: right;">
+              </div>
+              <div style="text-align: right;">
               <div>₹${item.total}</div>
               <button onclick="removeFromPreOrder('${item.name}')" style="background: none; border: none; color: red; cursor: pointer; font-size: 0.8rem;">✖</button>
-            </div>
-          </div>
+                </div>
+                </div>
         `).join('')}
         <hr style="margin: 1rem 0;">
         <div style="display: flex; justify-content: space-between; font-weight: 600;">
           <span>Total:</span>
           <span>₹${total.toFixed(2)}</span>
-        </div>
+              </div>
       `;
     }
     
@@ -6882,24 +7129,24 @@ ${customers.map(c => `${c.name}: ₹${c.currentDebt}`).join('\n')}
               </div>
               
               <hr style="border: none; border-top: 1px dashed #cbd5e0; margin: 1rem 0;">
-              
-              <div style="margin-bottom: 1rem;">
+            
+            <div style="margin-bottom: 1rem;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                   <span><strong>Order ID:</strong></span>
                   <span>#${preOrder.id}</span>
-                </div>
+                      </div>
                 <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                   <span><strong>Customer:</strong></span>
                   <span>${preOrder.customerName}</span>
-                </div>
+                    </div>
                 <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                   <span><strong>Phone:</strong></span>
                   <span>${preOrder.customerPhone}</span>
-                </div>
+                    </div>
                 <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                   <span><strong>Token:</strong></span>
                   <span style="font-weight: 700; color: #0d6efd;">#${preOrder.token}</span>
-                </div>
+                  </div>
               </div>
               
               <hr style="border: none; border-top: 1px dashed #cbd5e0; margin: 1rem 0;">
@@ -6914,10 +7161,10 @@ ${customers.map(c => `${c.name}: ₹${c.currentDebt}`).join('\n')}
                   <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.8rem; color: #64748b;">
                     <span>@ ₹${item.price}/kg</span>
                     <span>₹${item.total}</span>
-                  </div>
-                `).join('')}
-              </div>
-              
+                </div>
+              `).join('')}
+            </div>
+            
               <hr style="border: none; border-top: 1px dashed #cbd5e0; margin: 1rem 0;">
               
               <div style="display: flex; justify-content: space-between; font-weight: 600; font-size: 1.1rem; margin-bottom: 1rem;">
@@ -6965,9 +7212,9 @@ ${customers.map(c => `${c.name}: ₹${c.currentDebt}`).join('\n')}
             <div style="margin-top: 1rem; text-align: center;">
               <button onclick="goBackToMain()" class="btn-secondary" style="padding: 0.75rem 1.5rem;">🏠 Back to Main Menu</button>
             </div>
+            </div>
           </div>
-        </div>
-      `;
+        `;
       
       document.body.insertAdjacentHTML('beforeend', successHTML);
       
@@ -7115,18 +7362,18 @@ ${customers.map(c => `${c.name}: ₹${c.currentDebt}`).join('\n')}
                 <h1>🛍️ SMART GENERAL STORE</h1>
                 <p>Pre-Order Receipt</p>
                 <p>${new Date(order.orderDate).toLocaleString()}</p>
-              </div>
-              
+          </div>
+          
               <div class="details">
                 <div><strong>Order ID:</strong> #${order.id}</div>
                 <div><strong>Customer:</strong> ${order.customerName}</div>
                 <div><strong>Phone:</strong> ${order.customerPhone}</div>
-              </div>
+          </div>
               
               <div class="token">
                 <div style="font-weight: bold; margin-bottom: 5px;">🪙 PICKUP TOKEN</div>
                 <div class="token-number">#${order.token}</div>
-              </div>
+        </div>
               
               <div class="items">
                 <div style="text-align: center; font-weight: bold; margin-bottom: 10px;">ITEMS ORDERED</div>
@@ -7376,7 +7623,49 @@ Show this receipt with token when visiting the store.
       // Initialize loyalty display
       updateLoyaltyDisplay();
       updateLoyaltyTier();
+      
+      // Create sample pending bills for testing (remove this in production)
+      createSamplePendingBills();
     });
+    
+    // Function to create sample pending bills for testing
+    function createSamplePendingBills() {
+      const kathaRecords = JSON.parse(localStorage.getItem('kathaRecords') || '[]');
+      const customers = JSON.parse(localStorage.getItem('customers') || '[]');
+      
+      // Only create sample data if no records exist
+      if (kathaRecords.length === 0 && customers.length > 0) {
+        const sampleRecords = [
+          {
+            id: 'sample1',
+            customerId: customers[0].id,
+            customerName: customers[0].name,
+            itemName: 'Tomato',
+            quantity: 5,
+            unit: 'kg',
+            amount: 100,
+            dueDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago (overdue)
+            status: 'pending',
+            date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
+          },
+          {
+            id: 'sample2',
+            customerId: customers[0].id,
+            customerName: customers[0].name,
+            itemName: 'Onion',
+            quantity: 3,
+            unit: 'kg',
+            amount: 75,
+            dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days from now (pending)
+            status: 'pending',
+            date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
+          }
+        ];
+        
+        localStorage.setItem('kathaRecords', JSON.stringify(sampleRecords));
+        console.log('Sample pending bills created for testing');
+      }
+    }
   </script>
   <script src="app.js"></script>
 </body>
