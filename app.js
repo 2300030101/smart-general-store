@@ -3508,3 +3508,335 @@ window.addStock = async function(itemName, quantity) {
   }
 };
 
+// Backend Integration and API Management
+class BackendManager {
+  constructor() {
+    this.baseURL = 'http://localhost:3000/api';
+    this.isConnected = false;
+    this.checkConnection();
+  }
+
+  async checkConnection() {
+    try {
+      const response = await fetch(`${this.baseURL}/stock`);
+      this.isConnected = response.ok;
+      console.log('Backend connection:', this.isConnected ? '✅ Connected' : '❌ Disconnected');
+    } catch (error) {
+      this.isConnected = false;
+      console.log('❌ Backend not available, using localStorage');
+    }
+  }
+
+  async getStockData() {
+    if (!this.isConnected) {
+      return JSON.parse(localStorage.getItem('stockData') || '{}');
+    }
+
+    try {
+      const response = await fetch(`${this.baseURL}/stock`);
+      const data = await response.json();
+      return data.success ? data.data : {};
+    } catch (error) {
+      console.error('Error fetching stock data:', error);
+      return JSON.parse(localStorage.getItem('stockData') || '{}');
+    }
+  }
+
+  async updateStock(itemName, quantity, category = 'General') {
+    if (!this.isConnected) {
+      // Fallback to localStorage
+      let stockData = JSON.parse(localStorage.getItem('stockData') || '{}');
+      if (stockData[itemName]) {
+        stockData[itemName].quantity += quantity;
+      } else {
+        stockData[itemName] = {
+          quantity: quantity,
+          category: category,
+          lastUpdated: new Date().toISOString()
+        };
+      }
+      localStorage.setItem('stockData', JSON.stringify(stockData));
+      return { success: true, message: `Stock updated! ${itemName} now has ${stockData[itemName].quantity} units` };
+    }
+
+    try {
+      const response = await fetch(`${this.baseURL}/stock`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          itemName: itemName,
+          quantity: quantity,
+          category: category
+        })
+      });
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error updating stock:', error);
+      return { success: false, error: 'Failed to update stock' };
+    }
+  }
+
+  async getLowStockItems() {
+    if (!this.isConnected) {
+      const stockData = JSON.parse(localStorage.getItem('stockData') || '{}');
+      const lowStockItems = {};
+      Object.keys(stockData).forEach(itemName => {
+        if (stockData[itemName].quantity <= 10) {
+          lowStockItems[itemName] = stockData[itemName];
+        }
+      });
+      return lowStockItems;
+    }
+
+    try {
+      const response = await fetch(`${this.baseURL}/stock/low`);
+      const data = await response.json();
+      return data.success ? data.data : {};
+    } catch (error) {
+      console.error('Error fetching low stock items:', error);
+      return {};
+    }
+  }
+
+  async getStockStats() {
+    if (!this.isConnected) {
+      const stockData = JSON.parse(localStorage.getItem('stockData') || '{}');
+      const items = Object.keys(stockData);
+      
+      const stats = {
+        totalItems: items.length,
+        totalQuantity: 0,
+        lowStockItems: 0,
+        outOfStockItems: 0,
+        inStockItems: 0
+      };
+      
+      items.forEach(itemName => {
+        const quantity = stockData[itemName].quantity;
+        stats.totalQuantity += quantity;
+        
+        if (quantity === 0) {
+          stats.outOfStockItems++;
+        } else if (quantity <= 10) {
+          stats.lowStockItems++;
+        } else {
+          stats.inStockItems++;
+        }
+      });
+      
+      return stats;
+    }
+
+    try {
+      const response = await fetch(`${this.baseURL}/stock/stats`);
+      const data = await response.json();
+      return data.success ? data.data : {};
+    } catch (error) {
+      console.error('Error fetching stock stats:', error);
+      return {};
+    }
+  }
+}
+
+// Initialize Backend Manager
+const backendManager = new BackendManager();
+
+// Enhanced Stock Management Functions
+async function addStockWithBackend(itemName, quantity, category = 'General') {
+  const result = await backendManager.updateStock(itemName, quantity, category);
+  
+  if (result.success) {
+    ErrorHandler.showError(result.message, 'success');
+    
+    // Update the categories array for immediate display
+    let found = false;
+    categories.forEach(category => {
+      category.items.forEach(item => {
+        if (item.name === itemName) {
+          item.stock += quantity;
+          found = true;
+        }
+      });
+    });
+    
+    if (found) {
+      // Refresh the stock management display
+      showStockManagement();
+    }
+  } else {
+    ErrorHandler.showError(result.error || 'Failed to update stock', 'error');
+  }
+}
+
+// Enhanced Stock Management Display
+async function showEnhancedStockManagement() {
+  const stockStats = await backendManager.getStockStats();
+  const lowStockItems = await backendManager.getLowStockItems();
+  
+  let stockHTML = `
+    <div class="bill-section">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2>📦 Enhanced Stock Management</h2>
+        <div style="display: flex; gap: 1rem;">
+          <button onclick="showMainSection()" class="btn-secondary">🛒 Back to Shopping</button>
+          <button onclick="refreshStockData()" class="btn-primary">🔄 Refresh</button>
+        </div>
+      </div>
+      
+      <!-- Stock Statistics -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+        <div style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; padding: 1.5rem; border-radius: 12px; text-align: center;">
+          <h3>${stockStats.totalItems || 0}</h3>
+          <p>Total Items</p>
+        </div>
+        <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; padding: 1.5rem; border-radius: 12px; text-align: center;">
+          <h3>${stockStats.totalQuantity || 0}</h3>
+          <p>Total Quantity</p>
+        </div>
+        <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 1.5rem; border-radius: 12px; text-align: center;">
+          <h3>${stockStats.lowStockItems || 0}</h3>
+          <p>Low Stock Items</p>
+        </div>
+        <div style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 1.5rem; border-radius: 12px; text-align: center;">
+          <h3>${stockStats.outOfStockItems || 0}</h3>
+          <p>Out of Stock</p>
+        </div>
+      </div>
+      
+      <!-- Add Stock Form -->
+      <div style="background: #f8fafc; padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;">
+        <h3 style="margin-bottom: 1rem;">➕ Add Stock</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+          <input type="text" id="stockItemName" placeholder="Item Name" style="padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px;">
+          <input type="number" id="stockQuantity" placeholder="Quantity to Add" style="padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px;">
+          <select id="stockCategory" style="padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px;">
+            <option value="Vegetables">🥬 Vegetables</option>
+            <option value="Groceries">🛒 Groceries</option>
+            <option value="Dairy & Eggs">🥛 Dairy & Eggs</option>
+            <option value="Snacks & Beverages">🥨 Snacks & Beverages</option>
+            <option value="Household">🧴 Household</option>
+            <option value="Pooja Items">🛕 Pooja Items</option>
+            <option value="Stationery">✏️ Stationery</option>
+            <option value="General">📦 General</option>
+          </select>
+          <button onclick="addStockWithBackendFromUI()" class="btn-primary">Add Stock</button>
+        </div>
+      </div>
+      
+      <!-- Low Stock Alerts -->
+      ${Object.keys(lowStockItems).length > 0 ? `
+        <div style="background: #fef3c7; border: 1px solid #fde68a; border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem;">
+          <h3 style="color: #92400e; margin-bottom: 1rem;">⚠️ Low Stock Alerts</h3>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+            ${Object.keys(lowStockItems).map(itemName => `
+              <div style="background: white; padding: 1rem; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                <h4 style="margin: 0 0 0.5rem;">${itemName}</h4>
+                <p style="margin: 0; color: #92400e; font-weight: 600;">Quantity: ${lowStockItems[itemName].quantity}</p>
+                <p style="margin: 0.5rem 0 0; color: #666;">Category: ${lowStockItems[itemName].category}</p>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+      
+      <!-- Stock Table -->
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="background: #f8fafc;">
+              <th style="padding: 1rem; text-align: left; border-bottom: 1px solid #e2e8f0;">Category</th>
+              <th style="padding: 1rem; text-align: left; border-bottom: 1px solid #e2e8f0;">Item</th>
+              <th style="padding: 1rem; text-align: left; border-bottom: 1px solid #e2e8f0;">Stock (kg)</th>
+              <th style="padding: 1rem; text-align: left; border-bottom: 1px solid #e2e8f0;">Status</th>
+              <th style="padding: 1rem; text-align: left; border-bottom: 1px solid #e2e8f0;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${categories.map(category => 
+              category.items.map(item => {
+                const isOutOfStock = item.stock <= 0;
+                const isLowStock = item.stock <= 10 && item.stock > 0;
+                return `
+                  <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 1rem;">${category.name}</td>
+                    <td style="padding: 1rem;">${item.name}</td>
+                    <td style="padding: 1rem; ${isOutOfStock ? 'color: #dc2626;' : isLowStock ? 'color: #f59e0b;' : ''}">${item.stock}</td>
+                    <td style="padding: 1rem;">
+                      ${isOutOfStock ? '❌ Out of Stock' : isLowStock ? '⚠️ Low Stock' : '✅ In Stock'}
+                    </td>
+                    <td style="padding: 1rem;">
+                      <button onclick="quickAddStock('${item.name}', 10)" class="btn-primary" style="padding: 0.5rem; margin-right: 0.5rem;">+10</button>
+                      <button onclick="quickAddStock('${item.name}', 50)" class="btn-secondary" style="padding: 0.5rem;">+50</button>
+                    </td>
+                  </tr>
+                `;
+              }).join('')
+            ).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById("itemsSection").innerHTML = stockHTML;
+}
+
+// Quick Add Stock Functions
+async function quickAddStock(itemName, quantity) {
+  await addStockWithBackend(itemName, quantity);
+}
+
+async function addStockWithBackendFromUI() {
+  const itemName = document.getElementById("stockItemName").value.trim();
+  const quantity = parseFloat(document.getElementById("stockQuantity").value);
+  const category = document.getElementById("stockCategory").value;
+  
+  if (!itemName || isNaN(quantity) || quantity <= 0) {
+    ErrorHandler.showError('Please enter valid item name and quantity!', 'error');
+    return;
+  }
+  
+  await addStockWithBackend(itemName, quantity, category);
+  
+  // Clear form
+  document.getElementById("stockItemName").value = "";
+  document.getElementById("stockQuantity").value = "";
+}
+
+async function refreshStockData() {
+  await backendManager.checkConnection();
+  showEnhancedStockManagement();
+  ErrorHandler.showError('Stock data refreshed!', 'success');
+}
+
+// Override the original showStockManagement function
+function showStockManagement() {
+  showEnhancedStockManagement();
+}
+
+// Initialize the system
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🚀 Smart General Store Backend Integration Loaded');
+  
+  // Check backend connection status
+  setTimeout(() => {
+    if (backendManager.isConnected) {
+      ErrorHandler.showError('✅ Backend connected - Stock data will be synchronized', 'success');
+    } else {
+      ErrorHandler.showError('⚠️ Backend not available - Using local storage', 'warning');
+    }
+  }, 1000);
+});
+
+// Export functions for global access
+window.BackendManager = BackendManager;
+window.addStockWithBackend = addStockWithBackend;
+window.showEnhancedStockManagement = showEnhancedStockManagement;
+window.quickAddStock = quickAddStock;
+window.addStockWithBackendFromUI = addStockWithBackendFromUI;
+window.refreshStockData = refreshStockData;
+
